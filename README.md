@@ -9,7 +9,7 @@ Runtime translates nothing. It identifies the position in a closed corpus (6,236
 | Milestone | Scope | State |
 |---|---|---|
 | M1 | Corpus, meal units, paper feasibility (no ML) | Done: [report](reports/m1-feasibility.md) (Turkish) |
-| M2 | Acoustic model bake-off on Mac | Next |
+| M2 | Acoustic model bake-off on Mac | In progress: harness + [smoke set](reports/m2-smoke.md); held-out benchmark pending access |
 | M3–M5 | Position engine, live mic + playback, robustness, go/no-go | Planned |
 
 ## Run
@@ -20,6 +20,13 @@ uv run python scripts/fetch_data.py            # pinned inputs -> data/raw, sha2
 uv run python scripts/render_meal_durations.py # macOS `say`, ~20 min
 uv run python scripts/analyze_m1.py            # -> reports/m1-results.md
 uv run pytest
+
+# M2: one model per process, each model family in its own dependency group
+uv run python scripts/build_smoke_set.py
+uv run --group onnx python scripts/bench_asr.py --model quran-asr-tiny --set smoke
+uv run --group nemo python scripts/bench_asr.py --model nvidia-fc-ctc --set smoke
+uv run --group mlx  python scripts/bench_asr.py --model whisper-large-v3-turbo --set smoke
+uv run python scripts/report_m2.py --set smoke
 ```
 
 ## Data sources
@@ -29,3 +36,4 @@ Raw data is downloaded locally and not redistributed in this repository.
 - Quran text: [Tanzil Project](https://tanzil.net), `quran-simple-clean`, CC BY 3.0 (verbatim use only).
 - Turkish translations: [Tanzil](https://tanzil.net/trans/) `tr.diyanet`, `tr.vakfi`; non-commercial use only.
 - Recitation timings: [quran.com](https://quran.com) API, used for evaluation only.
+- Per-ayah recitations: [EveryAyah](https://everyayah.com), evaluation only, not redistributed.
