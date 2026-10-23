@@ -52,6 +52,10 @@ def main() -> None:
 
     for meta_path in sorted(STREAMS.glob("*.json")):
         meta = json.loads(meta_path.read_text())
+        # Clips are written last, so their presence marks a finished stream (resume after interruption).
+        if (out / f"{meta['id']}.clips.jsonl").exists():
+            continue
+
         audio = _read_wav(STREAMS / f"{meta['id']}.wav")
         if args.condition != "clean":
             audio = degrade(audio, SNR_DB[args.condition], seed=zlib.crc32(meta["id"].encode()))
