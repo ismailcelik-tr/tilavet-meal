@@ -98,7 +98,7 @@ Soru (İsmail): Ayetler birbirine bağlıysa, ortadan başlayan bir ayetin meali
 - **Ekran:** Meal metni gösterilir. Çok ayetli birimde açıklama notu eklenir, örn. *"Nas 4–6. ayetler birbirine bağlı olduğu için birlikte çevrilmiştir."* Not, birim metadata'sından sabit bir şablonla üretilir; meal metni değildir, serbest metin üretimi yoktur.
 - **Kullanıcı bilgilendirmesi:** Bağlantılı ayetlerde önceki ayetlerin mealinin de dinletileceği, kullanım sırasında kullanıcıya bildirilir.
 
-## Başlatma anı (açık karar)
+## Başlatma anı — karar: **early** (2026-10-23, İsmail)
 
 Çok ayetli bir birimin (örn. Nas 4–6) meali ne zaman çalmaya başlar?
 
