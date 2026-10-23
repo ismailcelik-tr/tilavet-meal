@@ -10,7 +10,7 @@ Runtime translates nothing. It identifies the position in a closed corpus (6,236
 |---|---|---|
 | M1 | Corpus, meal units, paper feasibility (no ML) | Done: [report](reports/m1-feasibility.md) (Turkish) |
 | M2 | Acoustic model bake-off on Mac | Done: [report](reports/m2-feasibility.md) (Turkish), NVIDIA FastConformer hybrid selected |
-| M3 | Position engine, offline real-time simulation | Next |
+| M3 | Position engine, offline real-time simulation | In progress: engine + [interim results](reports/m3-results.md) |
 | M4–M5 | Live mic + playback, robustness, go/no-go | Planned |
 
 ## Run
