@@ -78,22 +78,37 @@ Soru (İsmail): Ayetler birbirine bağlıysa, ortadan başlayan bir ayetin meali
 - Yaygın: ayetlerin **%22.7'si (1.413 ayet)** Diyanet'te çok ayetli bir cümle biriminde.
 - Ayet ayet çeviri bu durumda anlamsız parçalar üretiyor. Örnek, Vakfı 114:4 tek başına: *"O sinsi vesvesenin şerrinden,"*. Diyanet aynı üç ayeti tek cümlede veriyor.
 - **Çözüm:** Çalma birimi cümle birimidir. Sistem bir birimin ortasındaki ayete girerse (oturum başı, yeniden yakalama) birimin **tamamı** baştan çalınır. Önceki ayetlerin anlamı cümle içinde zaten gelir.
-- Diyanet'in 570 çok ayetli biriminin **hiçbiri** Tanzil'in 556 rükû sınırından biriyle bölünmüyor. İmam rükû noktasında durursa birim yarıda kalmaz. Erken başlatmanın "okunmamış ayetin anlamını önceden söyleme" riski bu yüzden düşük. Kalan risk, imamın rükû dışı bir yerde durması; M5'te gerçek kayıtla ölçülecek.
-- "last" politikası (birimin son ayeti tanınınca çal) bu riski sıfırlar, ama hızlı okuyucuda birikmeyi geri getirir: Shuraim max lag 14 s → 40 s, birimlerin %3'ü > 15 s. **Öneri: early (birim başı).**
+- Diyanet'in 570 çok ayetli biriminin **hiçbiri** Tanzil'in 556 rükû (konu bölümü) sınırından biriyle bölünmüyor. Okuyucu bir konu bölümünün sonunda durursa birim yarıda kalmaz. Okuyucunun bölüm ortasında durma sıklığı bilinmiyor; M5'te gerçek kayıtla ölçülecek.
+- Meali başlatma anı ayrı bir karar (aşağıda "Başlatma anı").
 - **Sonuç: Diyanet İşleri meali bu hedefe Vakfı'dan daha uygun.** Cümle sınırlarını zaten veriyor.
 
 **2. Konu bağı:** Hangi kıssa, kim konuşuyor ("dediler", kim?).
-- Kesintisiz dinlemede kendiliğinden sağlanır, çünkü kullanıcı önceki mealleri zaten duymuştur. Sorun sadece **giriş noktalarında**: oturum başı, imamın yeni rekâta surenin ortasından başlaması, takip kaybı sonrası.
+- Kesintisiz dinlemede kendiliğinden sağlanır, çünkü kullanıcı önceki mealleri zaten duymuştur. Sorun sadece **giriş noktalarında**: oturum başı, dinlemeye surenin ortasından katılma, okuyucunun yeni bir yerden başlaması, takip kaybı sonrası.
 - Özet üretmek (LLM vb.) doğrulanmış meal ilkesini bozar → **yapılmaz**.
 - Giriş noktası için öneriler, M4'te ölçülecek:
   - (a) Kısa künye anonsu: "Bakara suresi, 255. ayet". Doğrulanmış metadata, ~2 s.
   - (b) Okuyucu yavaşsa önceki birim(ler)in mealini hızlandırılmış "yakalama" olarak çal. Bütçe U1'den hesaplanır: mücevvedde oran 0.25, yani bol zaman; hızlı murattalde yok.
   - (c) Mobilde önceki meallerin ekranda metin olarak gösterilmesi.
 
-## Senin vermen gereken karar
+## Ürün kararları (2026-10-23, İsmail)
 
-- Meal: Bağlam analizine göre öneri **Diyanet İşleri** (cümle birimleri hazır).
-- Giriş noktası politikası (a/b/c) M4'e kadar açık kalabilir.
+- **Kullanım:** Namaz dışında, Kur'an tilavetini dinlerken (canlı okuyucu, kayıt, yayın). Namaz sırasında kullanım hedef değil.
+- **Meal:** Diyanet İşleri. Ekranda gösterilen ve seslendirilen meal metinleri yalnızca bu kaynaktan gelir.
+- **Cümle birimi bütün çalınır.** Ortadaki bir ayete girilirse birim baştan çalınır; bağlantılı önceki ayetlerin meali de dinletilir.
+- **Ekran:** Meal metni gösterilir. Çok ayetli birimde açıklama notu eklenir, örn. *"Nas 4–6. ayetler birbirine bağlı olduğu için birlikte çevrilmiştir."* Not, birim metadata'sından sabit bir şablonla üretilir; meal metni değildir, serbest metin üretimi yoktur.
+- **Kullanıcı bilgilendirmesi:** Bağlantılı ayetlerde önceki ayetlerin mealinin de dinletileceği, kullanım sırasında kullanıcıya bildirilir.
+
+## Başlatma anı (açık karar)
+
+Çok ayetli bir birimin (örn. Nas 4–6) meali ne zaman çalmaya başlar?
+
+| Politika | Meal başlar | Artı | Eksi |
+|---|---|---|---|
+| **early** | Birimin ilk ayeti (4) tanınınca (1–3 kelime) | En düşük gecikme; hızlı okuyucuda max lag 14 s | 5–6. ayetlerin anlamı, okuyucu onları okumadan önce duyulur |
+| **last** | Birimin son ayeti (6) tanınınca | Anlam okunan ayetten önce gelmez; Türkçe cümle Arapça ile birlikte biter | Hızlı okuyucuda max lag 40 s, birimlerin %3'ü > 15 s |
+| **end** | Birimin okunuşu tamamen bitince | En muhafazakâr | Hızlı okuyucuda max lag 53 s |
+
+Tek ayetli birimlerde (5.393 birimin 4.823'ü) üç politika arasında early/last farkı yoktur.
 
 ## M2 önerisi (onay bekliyor)
 
