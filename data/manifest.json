@@ -1,0 +1,67 @@
+{
+  "files": [
+    {
+      "path": "data/raw/quran-simple-clean.txt",
+      "url": "https://tanzil.net/pub/download/index.php?quranType=simple-clean&outType=txt-2&agree=true",
+      "sha256": "228df2a717671aeb9d2ff573002bd28d6b3f973f4bc7153554e3a81663d67610",
+      "retrieved_at": "2026-10-23T18:38:34+00:00",
+      "license": "Tanzil Quran Text, CC BY 3.0, verbatim only, attribution + link to tanzil.net"
+    },
+    {
+      "path": "data/raw/tr.diyanet.txt",
+      "url": "https://tanzil.net/trans/?transID=tr.diyanet&type=txt-2",
+      "sha256": "a9be7b4f291d8cf6f72dbd22dbc4b58f4716c137e56dbdc562aee3fc8c4bc4af",
+      "retrieved_at": "2026-10-23T18:38:34+00:00",
+      "license": "Tanzil translation, non-commercial use only (tanzil.net/trans)"
+    },
+    {
+      "path": "data/raw/tr.vakfi.txt",
+      "url": "https://tanzil.net/trans/?transID=tr.vakfi&type=txt-2",
+      "sha256": "240672aaf33d7d872b5f97edcd12e24940699ed3acc98e33fab0d737a7068234",
+      "retrieved_at": "2026-10-23T18:38:35+00:00",
+      "license": "Tanzil translation, non-commercial use only (tanzil.net/trans)"
+    },
+    {
+      "path": "data/raw/timings-1-abdulbaset-mujawwad.json",
+      "url": "https://api.qurancdn.com/api/qdc/audio/reciters/1/audio_files?chapter=1..114&segments=true",
+      "sha256": "f000372c72fd73b71b9052231918ac914aa705ded61225ce6a6cc4900b6083e3",
+      "retrieved_at": "2026-10-23T18:39:30+00:00",
+      "license": "quran.com / Quran Foundation API, terms unverified; evaluation use only"
+    },
+    {
+      "path": "data/raw/timings-6-husary-murattal.json",
+      "url": "https://api.qurancdn.com/api/qdc/audio/reciters/6/audio_files?chapter=1..114&segments=true",
+      "sha256": "68110f2ee26ef4bf6980849ef836fecdac63bcf64dcdd07e28cd7558565c8a49",
+      "retrieved_at": "2026-10-23T18:40:21+00:00",
+      "license": "quran.com / Quran Foundation API, terms unverified; evaluation use only"
+    },
+    {
+      "path": "data/raw/timings-9-minshawi-murattal.json",
+      "url": "https://api.qurancdn.com/api/qdc/audio/reciters/9/audio_files?chapter=1..114&segments=true",
+      "sha256": "6225017f962365ead523be7ffb6221fcbb547675d4eeebfebd9b06fd19d3d03e",
+      "retrieved_at": "2026-10-23T18:41:14+00:00",
+      "license": "quran.com / Quran Foundation API, terms unverified; evaluation use only"
+    },
+    {
+      "path": "data/raw/timings-7-alafasy-murattal.json",
+      "url": "https://api.qurancdn.com/api/qdc/audio/reciters/7/audio_files?chapter=1..114&segments=true",
+      "sha256": "0dacdcb07d573600874801ec55f3cbecd6b6c2a90568ee213a5141c8bf168a10",
+      "retrieved_at": "2026-10-23T18:42:04+00:00",
+      "license": "quran.com / Quran Foundation API, terms unverified; evaluation use only"
+    },
+    {
+      "path": "data/raw/timings-10-shuraim-murattal.json",
+      "url": "https://api.qurancdn.com/api/qdc/audio/reciters/10/audio_files?chapter=1..114&segments=true",
+      "sha256": "27715107ff824784e4e0b3fcec925bd0f7529703d682cfdc54be3ddb54605364",
+      "retrieved_at": "2026-10-23T18:43:01+00:00",
+      "license": "quran.com / Quran Foundation API, terms unverified; evaluation use only"
+    },
+    {
+      "path": "data/raw/timings-3-sudais-murattal.json",
+      "url": "https://api.qurancdn.com/api/qdc/audio/reciters/3/audio_files?chapter=1..114&segments=true",
+      "sha256": "f7d64fdaed1e059b8c43f748366822f9d3864e96a0e5ed81a58308e17aca09e3",
+      "retrieved_at": "2026-10-23T18:43:53+00:00",
+      "license": "quran.com / Quran Foundation API, terms unverified; evaluation use only"
+    }
+  ]
+}
