@@ -26,12 +26,16 @@ class Alignment:
     score: int
     corpus_start: int  # [start, end) of the aligned corpus span
     corpus_end: int
-    positions: tuple[int, ...]  # corpus positions matched by a hypothesis word
+    pairs: tuple[tuple[int, int], ...]  # (hypothesis index, corpus position) of matched words
     hyp_end: int  # hypothesis words [.., hyp_end) take part; larger = covers more recent audio
 
     @property
+    def positions(self) -> tuple[int, ...]:
+        return tuple(position for _, position in self.pairs)
+
+    @property
     def matched(self) -> int:
-        return len(self.positions)
+        return len(self.pairs)
 
 
 def _substitution(a: str, b: str) -> int:
@@ -71,12 +75,12 @@ def local_align(hyp: Sequence[str], corpus: Sequence[str], lo: int, hi: int) -> 
 
     i, j = best_at
     hyp_end, end = i, j
-    positions = []
+    pairs = []
     while i > 0 and j > 0 and score[i][j] > 0:
         direction = move[i][j]
         if direction == _DIAG:
             if _substitution(hyp[i - 1], region[j - 1]) > 0:
-                positions.append(lo + j - 1)
+                pairs.append((i - 1, lo + j - 1))
             i, j = i - 1, j - 1
         elif direction == _UP:
             i -= 1
@@ -87,7 +91,7 @@ def local_align(hyp: Sequence[str], corpus: Sequence[str], lo: int, hi: int) -> 
         score=best,
         corpus_start=lo + j,
         corpus_end=lo + end,
-        positions=tuple(reversed(positions)),
+        pairs=tuple(reversed(pairs)),
         hyp_end=hyp_end,
     )
 

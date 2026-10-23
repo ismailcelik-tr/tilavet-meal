@@ -7,9 +7,10 @@ Identical passages tie, so the engine waits for disambiguating words.
 TRACK: align only around the current position. An ayah is confirmed once
 enough of its *opening* words match (ayahs are identified by their prefix;
 scattered mid-ayah matches are look-alike phrases). Confirmed ayahs are never
-re-confirmed (repetitions); going back to a never-confirmed ayah needs one more
-word and must be where the reciter is now, else it is stale. Repeated misses
--> LOST -> ACQUIRE.
+re-confirmed (repetitions). A non-sequential ayah (going back, or more than
+`max_skip` ayahs ahead) needs extra words and must be where the reciter is now:
+window edges distort words into look-alikes of nearby passages. Repeated
+misses -> LOST -> ACQUIRE.
 """
 
 from collections import Counter, defaultdict
@@ -59,10 +60,12 @@ class EngineConfig:
     track_ahead: int = 50
     track_min_score: int = 3
     track_tie_slack: int = 0
+    track_margin: int = 2  # words a rival this close elsewhere also explains are contested (near-duplicates)
     confirm_words: int = 2  # minimum; raised per ayah to what sets it apart from its neighbours
     distinct_window: int = 3  # neighbours considered: ayahs within this distance + restarts in the previous one
     prefix_slack: int = 1  # ASR may drop one of the opening words
-    backtrack_extra: int = 1
+    max_skip: int = 2  # ayahs a reciter may skip and still count as sequential
+    jump_extra: int = 1
     lost_after: int = 4  # consecutive non-matching hops
     min_words_for_miss: int = 3
 
@@ -176,20 +179,24 @@ class PositionEngine:
         self._misses = 0
         self._pointer = alignment.corpus_end
 
+        rivals = [a for a in alignments if not _overlaps(a, alignment) and a.score > alignment.score - config.track_margin]
+        contested = {h for rival in rivals for h, _ in rival.pairs}
+        evidence = {position for h, position in alignment.pairs if h not in contested}
+
         matched = set(alignment.positions)
         current = self._index.ordinal_at(alignment.positions[-1])
         events: list[Event] = []
         for ordinal in sorted({self._index.ordinal_at(p) for p in matched}):
-            backward = ordinal < self._last_confirmed
-            if ordinal in self._confirmed or (backward and ordinal != current):
+            sequential = self._last_confirmed < ordinal <= self._last_confirmed + 1 + config.max_skip
+            if ordinal in self._confirmed or (not sequential and ordinal != current):
                 continue
 
             start, end = self._index.span(self._index.ref(ordinal))
-            extra = config.backtrack_extra if backward else 0
+            extra = 0 if sequential else config.jump_extra
             distinct = self._distinct[ordinal] or 0
             needed = min(max(config.confirm_words, distinct) + extra, end - start)
             prefix = range(start, min(end, start + needed + config.prefix_slack))
-            if sum(p in matched for p in prefix) < needed:
+            if sum(p in evidence for p in prefix) < needed:
                 continue
 
             events.append(AyahConfirmed(t, self._index.ref(ordinal), Mode.TRACK, alignment.score))

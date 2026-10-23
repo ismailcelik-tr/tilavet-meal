@@ -62,3 +62,9 @@ def test_hypothesis_end_is_reported():
     result = local_align(["alpha", "beta", "xx", "yy"], CORPUS, 0, len(CORPUS))
 
     assert result.hyp_end == 2
+
+
+def test_matched_pairs_link_hypothesis_to_corpus():
+    result = local_align(["xx", "beta", "gamma"], CORPUS, 0, len(CORPUS))
+
+    assert result.pairs == ((1, 3), (2, 4))

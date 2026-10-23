@@ -38,7 +38,17 @@ SURA_5 = {
     AyahRef(5, 3): [P, Q, token(5, "z1")],
     AyahRef(5, 4): [P, Q, token(5, "z2")],
 }
-ALL = {**SURA_1, **SURA_2, **SURA_3, **SURA_4, **SURA_5}
+# Sura 6: ayahs 2 and 4 differ only by a letter in the first word (like 37:174 / 37:178).
+F, W = "fatoolxx", "watoolxx"
+TAIL = [token(6, "n"), token(6, "h"), token(6, "j")]
+SURA_6 = {
+    AyahRef(6, 1): [token(6, "u", w) for w in range(3)],
+    AyahRef(6, 2): [F, *TAIL],
+    AyahRef(6, 3): [token(6, "g", w) for w in range(3)],
+    AyahRef(6, 4): [W, *TAIL],
+    AyahRef(6, 5): [token(6, "v", w) for w in range(3)],
+}
+ALL = {**SURA_1, **SURA_2, **SURA_3, **SURA_4, **SURA_5, **SURA_6}
 CONFIG = EngineConfig(acquire_min_matched=3, acquire_min_score=5, acquire_margin=3, acquire_min_votes=2)
 
 
@@ -146,18 +156,18 @@ def test_matches_outside_ayah_prefix_do_not_confirm(engine):
 
 
 def test_going_back_to_a_skipped_ayah_confirms_it(engine):
-    engine.feed(1.0, words((1, 1), (1, 2)))
-    engine.feed(2.0, words((1, 2), (1, 4)))
+    engine.feed(1.0, words((1, 3), (1, 4)))
+    engine.feed(2.0, words((1, 4), (1, 6)))
 
-    assert confirmed(engine.feed(3.0, words((1, 4), (1, 3)))) == [AyahRef(1, 3)]
-    assert confirmed(engine.feed(4.0, words((1, 3), (1, 4)))) == []
+    assert confirmed(engine.feed(3.0, words((1, 6), (1, 5)))) == [AyahRef(1, 5)]
+    assert confirmed(engine.feed(4.0, words((1, 5), (1, 6)))) == []
 
 
 def test_stale_backward_ayah_is_not_confirmed(engine):
-    engine.feed(1.0, words((1, 1), (1, 2)))
-    engine.feed(2.0, words((1, 2), (1, 4)))
+    engine.feed(1.0, words((1, 3), (1, 4)))
+    engine.feed(2.0, words((1, 4), (1, 6)))
 
-    assert confirmed(engine.feed(3.0, words((1, 3), (1, 4)))) == []
+    assert confirmed(engine.feed(3.0, words((1, 5), (1, 6)))) == []
 
 
 def test_ayah_needs_words_that_set_it_apart_from_neighbours(engine):
@@ -165,3 +175,25 @@ def test_ayah_needs_words_that_set_it_apart_from_neighbours(engine):
 
     assert confirmed(engine.feed(2.0, [P, Q])) == []
     assert confirmed(engine.feed(3.0, words((5, 3)))) == [AyahRef(5, 3)]
+
+
+def test_far_forward_jump_needs_more_words(engine):
+    engine.feed(1.0, words((1, 1), (1, 2)))
+
+    assert confirmed(engine.feed(2.0, words((1, 6), take=2))) == []
+    assert confirmed(engine.feed(3.0, words((1, 6)))) == [AyahRef(1, 6)]
+
+
+def test_far_forward_ayah_that_is_not_current_is_not_confirmed(engine):
+    engine.feed(1.0, words((1, 1), (1, 2)))
+
+    assert confirmed(engine.feed(2.0, words((1, 6), (2, 1), take=4))) == []
+
+
+def test_near_duplicate_ayah_is_not_confirmed_while_ambiguous(engine):
+    engine.feed(1.0, words((6, 1), (6, 2)))
+    engine.feed(2.0, words((6, 2), (6, 3)))
+
+    assert confirmed(engine.feed(3.0, [W, *TAIL])) == []
+    # Followed by 6:5, the tail can only be 6:4: confirmed late, not wrong.
+    assert confirmed(engine.feed(4.0, [*TAIL, *words((6, 5))])) == [AyahRef(6, 4), AyahRef(6, 5)]
