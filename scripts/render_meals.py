@@ -18,23 +18,30 @@ ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 MEALS = ROOT / "data" / "derived" / "meals"
 WORKERS = 8
+TIMEOUT_S = 120  # `say` can hang (seen with 8 workers); skipped units render on the next run
 
 
-def _render(unit: MealUnit, voice: str, out: Path, workdir: Path) -> None:
+def _render(unit: MealUnit, voice: str, out: Path, workdir: Path) -> bool:
     path = out / f"{unit.sura}-{unit.first}.m4a"
     if path.exists():
-        return
+        return True
 
     # -f avoids `say` parsing text that starts with "-" as an option.
     text_path = workdir / f"{unit.sura}-{unit.first}.txt"
     text_path.write_text(unit.text, encoding="utf-8")
     partial = path.with_suffix(".part.m4a")
-    subprocess.run(
-        ["say", "-v", voice, "--file-format=m4af", "--data-format=aac", "-o", str(partial), "-f", str(text_path)],
-        check=True,
-    )
+    try:
+        subprocess.run(
+            ["say", "-v", voice, "--file-format=m4af", "--data-format=aac", "-o", str(partial), "-f", str(text_path)],
+            check=True,
+            timeout=TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+
     partial.rename(path)
     text_path.unlink()
+    return True
 
 
 def main() -> None:
@@ -48,9 +55,9 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as tmp, ThreadPoolExecutor(WORKERS) as pool:
-        list(pool.map(lambda u: _render(u, args.voice, out, Path(tmp)), units))
+        rendered = sum(pool.map(lambda u: _render(u, args.voice, out, Path(tmp)), units))
 
-    print(f"{len(units)} units in {out}")
+    print(f"{rendered}/{len(units)} units in {out}; rerun if fewer")
 
 
 if __name__ == "__main__":
