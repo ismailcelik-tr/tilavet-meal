@@ -39,6 +39,11 @@ Kural ve parametreler kesin değil; ayar sırasında verinin gösterdiğine gör
 - **Kabul sınırı:** Hiçbir koşulda recall 1 puandan fazla düşmüyor ve p50 gecikme 0.5 s'den fazla artmıyorsa kural kabul edilir. Sınırı aşarsa karar İsmail'in.
 - **Dondurma:** Kurallar commit'le dondurulur (İsmail onayı). Sonra yeni kör set açılır (İsmail onayı). Açıldıktan sonra motor değişmez.
 
+**Sonuç (2026-10-24, İsmail):**
+- L ve P kabul edildi; ayar verisinde tiny yanlış 3 → 0, NVIDIA (M4 kör) 5 → 0, recall kaybı ≤ 0.6 puan, p50 ≤ +0.1 s.
+- Global `track_margin = 3` P'ye üstünlük getirmedi, gecikme ekledi; seçilmedi. B gerekmedi.
+- **Kurallar `398b251`'de donduruldu.**
+
 ## 2. Yeni kör set
 
 - **Okuyucular:** EveryAyah'ta hiç kullanılmamış, ikisi mücevved. Erişim kontrol edildi (HTTP 200):
