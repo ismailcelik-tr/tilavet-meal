@@ -23,3 +23,32 @@ Tanımlar `m3-results.md` ile aynı. Üst sınır: yanlış 0 ise üçler kural�
 | quran-asr-tiny / clean | 0.34% |
 | quran-asr-tiny / hard | 3.54% |
 | quran-asr-tiny / noisy | 0.84% |
+
+## Okuyucu bazında
+
+| Koşu | Akış | Meal | Yanlış | Geç | Recall | Mükerrer | Lost | Başlangıçtan p50 | p90 | Birim sonundan p50 | p90 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| nvidia-fc-rnnt / clean / alafasy | 10 | 72 | **0.0%** | 0.0% | 98.6% | 0.0% | 3 | 3.7 s | 6.2 s | -12.5 s | -2.6 s |
+| nvidia-fc-rnnt / clean / maher-muaiqly | 10 | 91 | **0.0%** | 0.0% | 98.9% | 0.0% | 1 | 2.9 s | 5.2 s | -8.3 s | -1.6 s |
+| nvidia-fc-rnnt / clean / minshawi-mujawwad | 10 | 54 | **1.9%** | 0.0% | 88.3% | 0.0% | 1 | 6.2 s | 10.9 s | -23.1 s | -3.9 s |
+| nvidia-fc-rnnt / clean / muhammad-ayyoub | 10 | 78 | **0.0%** | 0.0% | 96.3% | 0.0% | 3 | 3.7 s | 6.2 s | -14.1 s | -4.9 s |
+| nvidia-fc-rnnt / hard / alafasy | 10 | 72 | **0.0%** | 0.0% | 98.6% | 0.0% | 2 | 3.0 s | 5.6 s | -14.6 s | -2.6 s |
+| nvidia-fc-rnnt / hard / maher-muaiqly | 10 | 90 | **0.0%** | 0.0% | 97.8% | 0.0% | 1 | 2.4 s | 4.7 s | -8.7 s | -2.3 s |
+| nvidia-fc-rnnt / hard / minshawi-mujawwad | 10 | 36 | **8.3%** | 0.0% | 51.7% | 0.0% | 14 | 9.2 s | 35.2 s | -17.2 s | -6.6 s |
+| nvidia-fc-rnnt / hard / muhammad-ayyoub | 10 | 78 | **0.0%** | 0.0% | 96.3% | 0.0% | 2 | 3.2 s | 5.9 s | -14.3 s | -5.7 s |
+| nvidia-fc-rnnt / noisy / alafasy | 10 | 72 | **0.0%** | 0.0% | 98.6% | 0.0% | 2 | 3.2 s | 5.2 s | -14.6 s | -2.7 s |
+| nvidia-fc-rnnt / noisy / maher-muaiqly | 10 | 91 | **0.0%** | 0.0% | 98.9% | 0.0% | 1 | 2.5 s | 4.8 s | -8.6 s | -1.9 s |
+| nvidia-fc-rnnt / noisy / minshawi-mujawwad | 10 | 53 | **1.9%** | 1.9% | 85.0% | 0.0% | 2 | 6.7 s | 11.2 s | -23.9 s | -4.3 s |
+| nvidia-fc-rnnt / noisy / muhammad-ayyoub | 10 | 78 | **0.0%** | 0.0% | 96.3% | 0.0% | 2 | 3.4 s | 5.9 s | -14.1 s | -5.7 s |
+| quran-asr-tiny / clean / alafasy | 10 | 72 | **0.0%** | 0.0% | 98.6% | 0.0% | 1 | 3.7 s | 6.4 s | -13.7 s | -2.8 s |
+| quran-asr-tiny / clean / maher-muaiqly | 10 | 90 | **0.0%** | 0.0% | 97.8% | 0.0% | 2 | 3.4 s | 6.6 s | -7.7 s | -1.5 s |
+| quran-asr-tiny / clean / minshawi-mujawwad | 10 | 53 | **0.0%** | 0.0% | 88.3% | 0.0% | 0 | 6.2 s | 11.0 s | -22.4 s | -3.6 s |
+| quran-asr-tiny / clean / muhammad-ayyoub | 10 | 77 | **0.0%** | 0.0% | 95.1% | 0.0% | 2 | 4.1 s | 6.0 s | -13.9 s | -5.9 s |
+| quran-asr-tiny / hard / alafasy | 10 | 70 | **0.0%** | 1.4% | 95.9% | 0.0% | 1 | 3.9 s | 7.0 s | -14.1 s | -2.8 s |
+| quran-asr-tiny / hard / maher-muaiqly | 10 | 90 | **0.0%** | 0.0% | 97.8% | 0.0% | 2 | 3.2 s | 5.7 s | -7.5 s | -1.3 s |
+| quran-asr-tiny / hard / minshawi-mujawwad | 10 | 51 | **3.9%** | 0.0% | 80.0% | 0.0% | 12 | 7.9 s | 15.1 s | -21.7 s | -2.9 s |
+| quran-asr-tiny / hard / muhammad-ayyoub | 10 | 76 | **1.3%** | 0.0% | 92.6% | 0.0% | 2 | 4.1 s | 6.0 s | -13.9 s | -6.3 s |
+| quran-asr-tiny / noisy / alafasy | 10 | 72 | **0.0%** | 0.0% | 98.6% | 0.0% | 1 | 4.0 s | 6.4 s | -13.2 s | -1.9 s |
+| quran-asr-tiny / noisy / maher-muaiqly | 10 | 91 | **0.0%** | 0.0% | 98.9% | 0.0% | 2 | 3.6 s | 6.5 s | -7.3 s | -1.4 s |
+| quran-asr-tiny / noisy / minshawi-mujawwad | 10 | 52 | **0.0%** | 0.0% | 85.0% | 0.0% | 2 | 6.2 s | 11.0 s | -22.4 s | -4.5 s |
+| quran-asr-tiny / noisy / muhammad-ayyoub | 10 | 77 | **0.0%** | 0.0% | 95.1% | 0.0% | 2 | 4.1 s | 6.0 s | -13.5 s | -5.9 s |

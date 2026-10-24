@@ -3,7 +3,8 @@
     uv run python scripts/replay_m3.py               # report with default EngineConfig
     uv run python scripts/replay_m3.py --sweep       # tune on dev streams only
     uv run python scripts/replay_m3.py --debug quran-asr-tiny/clean   # wrong + missed per stream
-    uv run python scripts/replay_m3.py --blind       # M4 blind set, aggregate only
+    uv run python scripts/replay_m3.py --blind       # M4 blind set report
+    uv run python scripts/replay_m3.py --blind --debug quran-asr-tiny/hard
 """
 
 import argparse
@@ -190,7 +191,6 @@ def report(bench: Bench) -> None:
 
 
 def blind_report(bench: Bench) -> None:
-    """Aggregate only: the set is opened once, per-stream results stay unseen."""
     config = EngineConfig()
     lines = [
         "# M4 kör set sonuçları (otomatik: scripts/replay_m3.py --blind)",
@@ -210,6 +210,13 @@ def blind_report(bench: Bench) -> None:
     lines += ["", "## Ses tanıma hatası (ayet klipleri)", "", "| Koşu | CER |", "|---|---|"]
     for model, condition in available(bench):
         lines.append(f"| {model} / {condition} | {100 * bench.clip_cer(model, condition):.2f}% |")
+
+    lines += ["", "## Okuyucu bazında", "", *HEADER]
+    for model, condition in available(bench):
+        for reciter in sorted({m["reciter"] for m in bench.streams}):
+            subset = Bench.__new__(Bench)
+            subset.__dict__ = {**bench.__dict__, "streams": [m for m in bench.streams if m["reciter"] == reciter]}
+            lines.append(row(f"{model} / {condition} / {reciter}", subset.run(model, condition, config, "blind")))
 
     BLIND_OUT.write_text("\n".join(lines) + "\n")
     print(f"wrote {BLIND_OUT.relative_to(ROOT)}")
@@ -244,16 +251,15 @@ def main() -> None:
     parser.add_argument("--blind", action="store_true")
     args = parser.parse_args()
 
-    if args.blind:
-        blind_report(Bench(BLIND_STREAMS, BLIND_ASR))
-        return
-
-    bench = Bench()
+    bench = Bench(BLIND_STREAMS, BLIND_ASR) if args.blind else Bench()
     if args.sweep:
         sweep(bench)
         return
     if args.debug:
         debug(bench, args.debug)
+        return
+    if args.blind:
+        blind_report(bench)
         return
 
     report(bench)
