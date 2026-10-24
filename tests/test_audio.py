@@ -32,6 +32,12 @@ def test_load_audio_slice(stereo_44k_mp3):
     assert len(audio) / SAMPLE_RATE == pytest.approx(0.5, abs=0.03)
 
 
+def test_load_audio_other_rate(stereo_44k_mp3):
+    audio = load_audio(stereo_44k_mp3, sample_rate=22_050)
+
+    assert len(audio) / 22_050 == pytest.approx(1.5, abs=0.06)
+
+
 def test_load_audio_missing_file(tmp_path):
     with pytest.raises(FileNotFoundError):
         load_audio(tmp_path / "missing.wav")

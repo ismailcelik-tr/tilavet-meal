@@ -111,7 +111,7 @@ def _record(bench: Bench, reference: np.ndarray) -> tuple[np.ndarray, list[Recor
     return np.concatenate(recorded), records, mic.overflows, player
 
 
-def _jsonable(record: Record) -> dict:
+def jsonable(record: Record) -> dict:
     return {"type": type(record).__name__, **json.loads(json.dumps(dataclasses.asdict(record), default=str))}
 
 
@@ -156,7 +156,7 @@ def _summary(bench: Bench, meta: dict, recording: np.ndarray, records: list[Reco
     }
 
 
-def _write_wav(path: Path, audio: np.ndarray) -> None:
+def write_wav(path: Path, audio: np.ndarray) -> None:
     with wave.open(str(path), "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
@@ -191,8 +191,8 @@ def run_stream(bench: Bench, meta: dict) -> Outcome:
     offset = estimate_offset(reference, recording, SAMPLE_RATE, LEAD_S + 1)
     summary = _summary(bench, meta, recording, records, overflows, player, offset)
 
-    _write_wav(OUT / f"{meta['id']}.wav", recording)
-    (OUT / f"{meta['id']}.live.jsonl").write_text("".join(json.dumps(_jsonable(r), ensure_ascii=False) + "\n"
+    write_wav(OUT / f"{meta['id']}.wav", recording)
+    (OUT / f"{meta['id']}.live.jsonl").write_text("".join(json.dumps(jsonable(r), ensure_ascii=False) + "\n"
                                                           for r in records))
     summary_path.write_text(json.dumps(summary, indent=2))
     print(json.dumps(summary, indent=2))

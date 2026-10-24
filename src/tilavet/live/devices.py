@@ -10,7 +10,7 @@ import sounddevice as sd
 
 from tilavet.audio import SAMPLE_RATE
 
-__all__ = ["Kind", "Microphone", "default_output", "find_device", "outputs", "play"]
+__all__ = ["Kind", "Microphone", "default_output", "find_device", "outputs", "play", "start_playback"]
 
 
 class Kind(Enum):
@@ -68,3 +68,8 @@ class Microphone:
 
 def play(audio: np.ndarray, device: str) -> None:
     sd.play(audio, SAMPLE_RATE, device=find_device(device, Kind.OUTPUT), blocking=True)
+
+
+def start_playback(audio: np.ndarray, sample_rate: int, device: str) -> None:
+    """Non-blocking; replaces whatever this process is playing."""
+    sd.play(audio, sample_rate, device=find_device(device, Kind.OUTPUT))
