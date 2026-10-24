@@ -9,8 +9,10 @@ Yanlış = son 10 s içinde okunmamış bir ayetin meali (yanıltıcı) / tüm �
 | Koşu | Akış | Meal | Yanlış | Geç | Recall | Mükerrer | Lost | Başlangıçtan p50 | p90 | Birim sonundan p50 | p90 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | nvidia-fc-rnnt / clean | 10 | 62 | **0.0%** | 0.0% | 98.4% | 0.0% | 2 | 3.8 s | 5.9 s | -11.8 s | -5.5 s |
+| nvidia-fc-rnnt / hard | 10 | 62 | **0.0%** | 0.0% | 98.4% | 0.0% | 1 | 3.2 s | 5.8 s | -12.5 s | -5.8 s |
 | nvidia-fc-rnnt / noisy | 10 | 62 | **0.0%** | 0.0% | 98.4% | 0.0% | 2 | 3.4 s | 6.2 s | -12.8 s | -5.5 s |
 | quran-asr-tiny / clean | 10 | 62 | **0.0%** | 0.0% | 98.4% | 0.0% | 2 | 4.0 s | 6.3 s | -11.2 s | -5.0 s |
+| quran-asr-tiny / hard | 10 | 62 | **0.0%** | 0.0% | 98.4% | 0.0% | 3 | 4.3 s | 7.2 s | -11.2 s | -4.6 s |
 | quran-asr-tiny / noisy | 10 | 62 | **0.0%** | 0.0% | 98.4% | 0.0% | 2 | 4.1 s | 7.0 s | -10.7 s | -4.6 s |
 
 ## test
@@ -18,8 +20,10 @@ Yanlış = son 10 s içinde okunmamış bir ayetin meali (yanıltıcı) / tüm �
 | Koşu | Akış | Meal | Yanlış | Geç | Recall | Mükerrer | Lost | Başlangıçtan p50 | p90 | Birim sonundan p50 | p90 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | nvidia-fc-rnnt / clean | 20 | 159 | **0.0%** | 0.0% | 97.5% | 0.0% | 2 | 3.7 s | 7.5 s | -9.1 s | -2.3 s |
+| nvidia-fc-rnnt / hard | 20 | 156 | **1.3%** | 0.0% | 94.5% | 0.0% | 8 | 3.8 s | 8.9 s | -8.8 s | -2.1 s |
 | nvidia-fc-rnnt / noisy | 20 | 159 | **0.0%** | 0.0% | 97.5% | 0.0% | 1 | 3.6 s | 6.6 s | -9.1 s | -2.6 s |
 | quran-asr-tiny / clean | 20 | 158 | **0.0%** | 0.0% | 96.3% | 0.0% | 1 | 4.0 s | 6.4 s | -8.7 s | -2.7 s |
+| quran-asr-tiny / hard | 20 | 155 | **0.0%** | 0.6% | 95.1% | 0.0% | 7 | 4.3 s | 7.9 s | -8.1 s | -2.6 s |
 | quran-asr-tiny / noisy | 20 | 157 | **0.0%** | 0.6% | 95.7% | 0.0% | 4 | 4.3 s | 6.9 s | -8.5 s | -2.2 s |
 
 ## Koşulların ses tanıma hatası (ayet klipleri, tüm akışlar)
@@ -27,8 +31,10 @@ Yanlış = son 10 s içinde okunmamış bir ayetin meali (yanıltıcı) / tüm �
 | Koşu | CER |
 |---|---|
 | nvidia-fc-rnnt / clean | 1.13% |
+| nvidia-fc-rnnt / hard | 7.48% |
 | nvidia-fc-rnnt / noisy | 1.62% |
 | quran-asr-tiny / clean | 0.35% |
+| quran-asr-tiny / hard | 5.11% |
 | quran-asr-tiny / noisy | 1.01% |
 
 ## Okuyucu bazında (test, varsayılan config)
@@ -39,6 +45,10 @@ Yanlış = son 10 s içinde okunmamış bir ayetin meali (yanıltıcı) / tüm �
 | nvidia-fc-rnnt / clean / hani-rifai | 5 | 40 | **0.0%** | 0.0% | 100.0% | 0.0% | 1 | 3.5 s | 5.2 s | -8.9 s | -3.2 s |
 | nvidia-fc-rnnt / clean / minshawi | 5 | 44 | **0.0%** | 0.0% | 100.0% | 0.0% | 0 | 3.7 s | 5.3 s | -9.9 s | -3.6 s |
 | nvidia-fc-rnnt / clean / sudais | 5 | 50 | **0.0%** | 0.0% | 100.0% | 0.0% | 0 | 3.4 s | 6.6 s | -5.4 s | -1.3 s |
+| nvidia-fc-rnnt / hard / abdulbaset-mujawwad | 5 | 22 | **4.5%** | 0.0% | 72.4% | 0.0% | 3 | 8.9 s | 11.8 s | -12.1 s | -3.6 s |
+| nvidia-fc-rnnt / hard / hani-rifai | 5 | 40 | **0.0%** | 0.0% | 100.0% | 0.0% | 1 | 3.8 s | 6.5 s | -8.8 s | -1.5 s |
+| nvidia-fc-rnnt / hard / minshawi | 5 | 44 | **0.0%** | 0.0% | 100.0% | 0.0% | 0 | 3.9 s | 6.2 s | -9.9 s | -4.2 s |
+| nvidia-fc-rnnt / hard / sudais | 5 | 50 | **2.0%** | 0.0% | 98.0% | 0.0% | 4 | 2.5 s | 7.2 s | -6.4 s | -1.2 s |
 | nvidia-fc-rnnt / noisy / abdulbaset-mujawwad | 5 | 25 | **0.0%** | 0.0% | 86.2% | 0.0% | 0 | 6.1 s | 10.0 s | -13.4 s | -7.4 s |
 | nvidia-fc-rnnt / noisy / hani-rifai | 5 | 40 | **0.0%** | 0.0% | 100.0% | 0.0% | 1 | 3.5 s | 4.8 s | -8.8 s | -2.8 s |
 | nvidia-fc-rnnt / noisy / minshawi | 5 | 44 | **0.0%** | 0.0% | 100.0% | 0.0% | 0 | 3.8 s | 5.3 s | -9.9 s | -4.2 s |
@@ -47,6 +57,10 @@ Yanlış = son 10 s içinde okunmamış bir ayetin meali (yanıltıcı) / tüm �
 | quran-asr-tiny / clean / hani-rifai | 5 | 39 | **0.0%** | 0.0% | 97.5% | 0.0% | 1 | 3.8 s | 6.7 s | -8.2 s | -3.0 s |
 | quran-asr-tiny / clean / minshawi | 5 | 44 | **0.0%** | 0.0% | 100.0% | 0.0% | 0 | 4.4 s | 6.0 s | -8.6 s | -3.7 s |
 | quran-asr-tiny / clean / sudais | 5 | 50 | **0.0%** | 0.0% | 100.0% | 0.0% | 0 | 3.6 s | 5.3 s | -5.3 s | -0.9 s |
+| quran-asr-tiny / hard / abdulbaset-mujawwad | 5 | 25 | **0.0%** | 0.0% | 86.2% | 0.0% | 1 | 7.3 s | 12.0 s | -11.9 s | -4.7 s |
+| quran-asr-tiny / hard / hani-rifai | 5 | 37 | **0.0%** | 2.7% | 92.5% | 0.0% | 4 | 4.1 s | 7.6 s | -8.0 s | -3.2 s |
+| quran-asr-tiny / hard / minshawi | 5 | 43 | **0.0%** | 0.0% | 97.7% | 0.0% | 0 | 4.5 s | 6.9 s | -9.1 s | -3.7 s |
+| quran-asr-tiny / hard / sudais | 5 | 50 | **0.0%** | 0.0% | 100.0% | 0.0% | 2 | 3.6 s | 6.0 s | -5.0 s | -0.8 s |
 | quran-asr-tiny / noisy / abdulbaset-mujawwad | 5 | 24 | **0.0%** | 0.0% | 79.3% | 0.0% | 2 | 6.7 s | 10.8 s | -14.6 s | -5.6 s |
 | quran-asr-tiny / noisy / hani-rifai | 5 | 40 | **0.0%** | 2.5% | 100.0% | 0.0% | 2 | 4.3 s | 6.7 s | -7.8 s | -2.2 s |
 | quran-asr-tiny / noisy / minshawi | 5 | 44 | **0.0%** | 0.0% | 100.0% | 0.0% | 0 | 4.4 s | 6.1 s | -9.1 s | -3.7 s |
