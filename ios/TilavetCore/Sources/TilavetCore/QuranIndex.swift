@@ -7,6 +7,11 @@ public final class QuranIndex: Sendable {
     private let starts: [Int]  // ordinal -> first word position
     private let postings: [String: [Int]]
 
+    /// The recited text: Tanzil simple-clean without the basmala prefixes, normalized.
+    public static func recited(_ quran: [AyahRef: String]) -> QuranIndex {
+        build(Dictionary(uniqueKeysWithValues: quran.map { ($0.key, TilavetCore.words(normalize(stripBasmala($0.key, $0.value)))) }))
+    }
+
     public static func build(_ ayahs: [AyahRef: [String]]) -> QuranIndex {
         let refs = ayahs.keys.sorted()
         var words: [String] = [], wordAyah: [Int] = [], starts: [Int] = []

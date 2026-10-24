@@ -29,8 +29,7 @@ enum Golden {
             throw XCTSkip("run scripts/fetch_data.py first")
         }
         let quran = try parseTanzil(String(contentsOf: quranFile, encoding: .utf8))
-        let index = QuranIndex.build(
-            Dictionary(uniqueKeysWithValues: quran.map { ($0.key, words(normalize(stripBasmala($0.key, $0.value)))) }))
+        let index = QuranIndex.recited(quran)
         cachedIndex = index
         return index
     }

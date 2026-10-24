@@ -1,26 +1,61 @@
 import SwiftUI
+import TilavetCore
 
 struct ContentView: View {
-    @State private var status = "Hazır"
+    @StateObject private var pipeline = Pipeline()
+    @State private var parityStatus: String?
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             Text("Tilavet Meal").font(.title)
-            Text(status).foregroundStyle(.secondary)
+            Text(parityStatus ?? pipeline.status).foregroundStyle(.secondary)
+
+            if let meal = pipeline.meal {
+                VStack(spacing: 8) {
+                    Text(span(meal)).font(.headline)
+                    Text(meal.text).multilineTextAlignment(.center)
+                    if meal.first != meal.last {
+                        Text("(\(span(meal)) birbirine bağlı olduğu için birlikte çevrilmiştir.)")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Spacer()
+            Button(pipeline.running ? "Durdur" : "Başlat") {
+                pipeline.running ? pipeline.stop() : start()
+            }
+            .buttonStyle(.borderedProminent)
         }
         .padding()
         .task {
-            guard LaunchArgs.has("--asr-parity") else {
+            if LaunchArgs.has("--asr-parity") {
+                await runParity()
                 return
             }
-            status = "ASR karşılaştırması sürüyor"
-            let threads = (LaunchArgs.value("--threads") ?? "1,2,4").split(separator: ",").compactMap { Int($0) }
-            do {
-                try await Task.detached { try Parity.run(threads: threads) }.value
-                status = "ASR karşılaştırması bitti"
-            } catch {
-                status = "Hata: \(error)"
+            if LaunchArgs.has("--autostart") {
+                start()
             }
+        }
+    }
+
+    private func start() {
+        pipeline.start(threads: Int(LaunchArgs.value("--threads") ?? "") ?? 2, mute: LaunchArgs.has("--mute"),
+                       durationS: Double(LaunchArgs.value("--duration") ?? ""))
+    }
+
+    private func span(_ unit: MealUnit) -> String {
+        unit.first == unit.last ? "\(unit.sura):\(unit.first)" : "\(unit.sura):\(unit.first)-\(unit.last)"
+    }
+
+    private func runParity() async {
+        parityStatus = "ASR karşılaştırması sürüyor"
+        let threads = (LaunchArgs.value("--threads") ?? "1,2,4").split(separator: ",").compactMap { Int($0) }
+        do {
+            try await Task.detached { try Parity.run(threads: threads) }.value
+            parityStatus = "ASR karşılaştırması bitti"
+        } catch {
+            parityStatus = "Hata: \(error)"
         }
     }
 }
