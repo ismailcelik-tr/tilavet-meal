@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SETS = {
     "main": (ROOT / "data" / "derived" / "streams", ROOT / "data" / "derived" / "m3" / "asr"),
     "blind": (ROOT / "data" / "derived" / "streams-blind", ROOT / "data" / "derived" / "m4" / "asr-blind"),
+    "blind2": (ROOT / "data" / "derived" / "streams-blind2", ROOT / "data" / "derived" / "m5" / "asr-blind2"),
 }
 QURAN = ROOT / "data" / "raw" / "quran-simple-clean.txt"
 

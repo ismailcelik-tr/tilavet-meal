@@ -21,6 +21,7 @@ RAW = ROOT / "data" / "raw"
 AUDIO = RAW / "everyayah"
 OUT = ROOT / "data" / "derived" / "streams"
 BLIND_OUT = ROOT / "data" / "derived" / "streams-blind"
+BLIND2_OUT = ROOT / "data" / "derived" / "streams-blind2"
 
 USER_AGENT = "tilavet-meal/0.1 (research prototype)"
 AYAH_URL = "https://everyayah.com/data/{folder}/{sura:03d}{aya:03d}.mp3"
@@ -41,18 +42,28 @@ BLIND_RECITERS = {
     "muhammad-ayyoub": ("Muhammad_Ayyoub_128kbps", "blind"),
     "minshawi-mujawwad": ("Minshawy_Mujawwad_192kbps", "blind"),
 }
+# Held out until the M5 rules are frozen; two mujawwad reciters, the weak spot in M4.
+BLIND2_RECITERS = {
+    "husary-mujawwad": ("Husary_128kbps_Mujawwad", "blind"),
+    "tablawi": ("Mohammad_al_Tablaway_128kbps", "blind"),
+    "ghamdi": ("Ghamadi_40kbps", "blind"),
+    "hudhaify": ("Hudhaify_128kbps", "blind"),
+}
 STREAMS_PER_RECITER = 5
 BLIND_STREAMS_PER_RECITER = 10
 MAX_AYAHS = 12
 MAX_SECONDS = 240.0
 SEED = 11
 BLIND_SEED = 29
+BLIND2_SEED = 47
 
 P_REPEAT = 0.12
 P_SKIP = 0.06
 P_PAUSE = 0.08
 GAP_S = (0.3, 0.8)
 PAUSE_S = (8.0, 20.0)
+LONG_PAUSE_S = 30.0
+LONG_PAUSE_AFTER = 4  # among the first ayahs, so the MAX_SECONDS cut keeps the pause
 
 BASMALA = AyahRef(1, 1)
 NO_BASMALA_SURAS = {1, 9}
@@ -100,6 +111,12 @@ def _script(rng: random.Random, passage: list[AyahRef]) -> list[tuple[str, AyahR
     return plan
 
 
+def _with_long_pause(rng: random.Random, plan: list[tuple[str, AyahRef | float]]) -> list[tuple[str, AyahRef | float]]:
+    ayahs = [i for i, (kind, _) in enumerate(plan) if kind == "ayah"][:LONG_PAUSE_AFTER]
+    at = rng.choice(ayahs[1:] or ayahs) + 1
+    return [*plan[:at], ("pause", LONG_PAUSE_S), *plan[at:]]
+
+
 def _render(folder: str, plan, rng: random.Random) -> tuple[np.ndarray, list[dict]]:
     chunks, truth, cursor = [], [], 0.0
 
@@ -136,8 +153,9 @@ def _write_wav(path: Path, audio: np.ndarray) -> None:
 
 
 SETS = {
-    "main": (RECITERS, STREAMS_PER_RECITER, SEED, OUT),
-    "blind": (BLIND_RECITERS, BLIND_STREAMS_PER_RECITER, BLIND_SEED, BLIND_OUT),
+    "main": (RECITERS, STREAMS_PER_RECITER, SEED, OUT, False),
+    "blind": (BLIND_RECITERS, BLIND_STREAMS_PER_RECITER, BLIND_SEED, BLIND_OUT, False),
+    "blind2": (BLIND2_RECITERS, BLIND_STREAMS_PER_RECITER, BLIND2_SEED, BLIND2_OUT, True),
 }
 
 
@@ -146,7 +164,7 @@ def main() -> None:
     parser.add_argument("--set", default="main", choices=sorted(SETS))
     args = parser.parse_args()
 
-    reciters, per_reciter, seed, out = SETS[args.set]
+    reciters, per_reciter, seed, out, long_pause = SETS[args.set]
     refs = sorted(load_tanzil(RAW / "quran-simple-clean.txt"))
     out.mkdir(parents=True, exist_ok=True)
     rng = random.Random(seed)
@@ -155,6 +173,8 @@ def main() -> None:
         for n in range(per_reciter):
             stream_id = f"{name}-{n}"
             plan = _script(rng, _passage(rng, refs))
+            if long_pause:
+                plan = _with_long_pause(rng, plan)
             audio, truth = _render(folder, plan, rng)
 
             _write_wav(out / f"{stream_id}.wav", audio)
