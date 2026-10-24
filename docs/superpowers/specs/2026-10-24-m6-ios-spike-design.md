@@ -44,7 +44,7 @@ Reddedilenler:
 - **Ses oturumu:** `AVAudioSession` `.playAndRecord`, `.allowBluetoothA2DP`, giriş iPhone mikrofonuna sabit. Kulaklık A2DP'de kalır; HFP'ye düşmez (M4 dersi).
 - **Giriş:** `AVAudioEngine` input tap → 16 kHz mono'ya dönüştürme → live session (12 s pencere, 1 s adım; Python'la aynı).
 - **ASR:** sherpa-onnx `OfflineRecognizer` (Zipformer CTC), `model.int8.onnx`, `tokens.txt`, `spelling.json`. İş parçacığı sayısı ölçülerek seçilir (1, 2, 4).
-- **Meal:** pakete yalnız ölçüm akışlarının birimleri girer (M4 canlı oturumunun 8 akışı + kendi denemeler için Fatiha). Önceden üretilmiş AAC, `AVAudioPlayer`. Kuyruk kuralları `MealPlayer` ile aynı.
+- **Meal:** pakete bütün meal sesleri girer (434 MB): her tilavet denenebilir ve gerçek kurulum boyutu ölçülür. Önceden üretilmiş AAC, `AVAudioPlayer`. Kuyruk kuralları `MealPlayer` ile aynı.
 - **Arayüz:** Başlat/Durdur, çalınan mealin metni ve ayet numarası (çok ayetli birimde "birlikte çevrilmiştir" notu), durum (dinliyor / takip kaybedildi).
 - **Arka plan:** `UIBackgroundModes: audio`. Oturum ön planda başlar, kilitli ekranda sürer.
 - **Ölçüm modu:** Başlatma argümanlarıyla (`--autostart`, `--duration`) Mac'ten başlatılır. Uygulama `Documents/` altına yazar:
