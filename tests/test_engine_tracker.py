@@ -1,4 +1,5 @@
 import hashlib
+from dataclasses import replace
 
 import pytest
 
@@ -49,7 +50,8 @@ SURA_6 = {
     AyahRef(6, 5): [token(6, "v", w) for w in range(3)],
 }
 ALL = {**SURA_1, **SURA_2, **SURA_3, **SURA_4, **SURA_5, **SURA_6}
-CONFIG = EngineConfig(acquire_min_matched=3, acquire_min_score=5, acquire_margin=3, acquire_min_votes=2)
+CONFIG = EngineConfig(acquire_min_matched=3, acquire_min_score=5, acquire_margin=3, acquire_min_votes=2,
+                      confirm_windows=1)
 
 
 def words(*refs: tuple[int, int], take: int | None = None) -> list[str]:
@@ -197,3 +199,38 @@ def test_near_duplicate_ayah_is_not_confirmed_while_ambiguous(engine):
     assert confirmed(engine.feed(3.0, [W, *TAIL])) == []
     # Followed by 6:5, the tail can only be 6:4: confirmed late, not wrong.
     assert confirmed(engine.feed(4.0, [*TAIL, *words((6, 5))])) == [AyahRef(6, 4), AyahRef(6, 5)]
+
+
+# One phrase three times, two of its words common (like 37:40/74/128 "illa ibad allah al-mukhlasin").
+# A stray word next to the first occurrence must not hide the other two from Acquire.
+PHRASE = [token(7, "c1"), token(7, "r1"), token(7, "c2"), token(7, "r2")]
+STRAY = token(7, "z")
+LOOKALIKE = {AyahRef(7, a): [token(7, a, w) for w in range(10)] for a in range(1, 9)}
+LOOKALIKE |= {AyahRef(7, a): PHRASE for a in (2, 5, 7)}
+LOOKALIKE[AyahRef(7, 3)] = [STRAY, *LOOKALIKE[AyahRef(7, 3)][1:]]
+LOOKALIKE[AyahRef(7, 8)] = [PHRASE[0], PHRASE[2], *LOOKALIKE[AyahRef(7, 8)][2:]]
+
+
+def test_acquire_sees_lookalikes_that_got_fewer_votes():
+    engine = PositionEngine(QuranIndex.build(LOOKALIKE), EngineConfig(common_word_limit=3))
+
+    assert engine.feed(1.0, [STRAY, *PHRASE]) == []
+    assert engine.mode is Mode.ACQUIRE
+
+
+def test_track_confirmation_needs_two_windows():
+    engine = PositionEngine(QuranIndex.build(ALL), replace(CONFIG, confirm_windows=2))
+    engine.feed(1.0, words((1, 1), (1, 2)))
+
+    assert confirmed(engine.feed(2.0, words((1, 2)) + words((1, 3), take=2))) == []
+    assert confirmed(engine.feed(3.0, words((1, 2)) + words((1, 3), take=3))) == [AyahRef(1, 3)]
+
+
+def test_one_window_glimpse_is_dropped():
+    engine = PositionEngine(QuranIndex.build(ALL), replace(CONFIG, confirm_windows=2))
+    engine.feed(1.0, words((1, 1), (1, 2)))
+    engine.feed(2.0, words((1, 2)) + words((1, 3), take=2))
+    engine.feed(3.0, words((1, 2)))
+
+    assert confirmed(engine.feed(4.0, words((1, 2)) + words((1, 3), take=2))) == []
+    assert confirmed(engine.feed(5.0, words((1, 2)) + words((1, 3), take=3))) == [AyahRef(1, 3)]

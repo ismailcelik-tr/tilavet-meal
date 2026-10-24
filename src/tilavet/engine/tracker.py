@@ -2,7 +2,9 @@
 
 ACQUIRE: position unknown. Vote candidate regions from exact word hits, align
 each, commit only if the best region beats every other region by a margin.
-Identical passages tie, so the engine waits for disambiguating words.
+Identical passages tie, so the engine waits for disambiguating words. Places
+where the winner's own rare words line up are aligned as rivals even if they
+got too few votes: a stray word must not hide a look-alike passage.
 
 TRACK: align only around the current position. An ayah is confirmed once
 enough of its *opening* words match (ayahs are identified by their prefix;
@@ -14,7 +16,7 @@ misses -> LOST -> ACQUIRE.
 """
 
 from collections import Counter, defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 
@@ -54,6 +56,7 @@ class EngineConfig:
     acquire_margin: int = 3
     acquire_min_votes: int = 3
     acquire_max_candidates: int = 8
+    acquire_rival_votes: int = 2  # the winner's own rare words lining up elsewhere: a look-alike passage
     diagonal_tolerance: int = 8  # words; ASR insertions/deletions shift the diagonal
     common_word_limit: int = 500  # words with more occurrences don't vote
     track_back: int = 30
@@ -64,6 +67,7 @@ class EngineConfig:
     confirm_words: int = 2  # minimum; raised per ayah to what sets it apart from its neighbours
     distinct_window: int = 3  # neighbours considered: ayahs within this distance + restarts in the previous one
     prefix_slack: int = 1  # ASR may drop one of the opening words
+    confirm_windows: int = 1  # consecutive windows an ayah's opening must be seen in
     max_skip: int = 2  # ayahs a reciter may skip and still count as sequential
     jump_extra: int = 1
     lost_after: int = 4  # consecutive non-matching hops
@@ -78,6 +82,7 @@ class PositionEngine:
         self._pointer = 0
         self._last_confirmed = -1
         self._confirmed: set[int] = set()
+        self._streaks: dict[int, int] = {}
         self._misses = 0
         self._distinct = _distinct_prefixes(index, config.distinct_window)
 
@@ -96,12 +101,14 @@ class PositionEngine:
 
     def _acquire(self, t: float, words: Sequence[str]) -> list[Event]:
         config = self._config
-        alignments = self._candidate_alignments(words)
+        alignments = self._candidate_alignments(words, range(len(words)), config.acquire_min_votes)
         if not alignments:
             return []
 
         best = max(alignments, key=lambda a: a.score)
-        rivals = [a for a in alignments if not _overlaps(a, best)]
+        # The vote threshold can hide look-alikes the winner beat only by a stray word; search them explicitly.
+        lookalikes = self._candidate_alignments(words, [h for h, _ in best.pairs], config.acquire_rival_votes)
+        rivals = [a for a in alignments + lookalikes if not _overlaps(a, best)]
         runner_up = max((a.score for a in rivals), default=0)
 
         if (
@@ -114,16 +121,18 @@ class PositionEngine:
         self._mode = Mode.TRACK
         self._pointer = best.corpus_end
         self._misses = 0
+        self._streaks = {}
         current = self._index.ordinal_at(best.positions[-1])
         self._last_confirmed = current
         self._confirmed = {current}
         return [AyahConfirmed(t, self._index.ref(current), Mode.ACQUIRE, best.score)]
 
-    def _candidate_alignments(self, words: Sequence[str]) -> list[Alignment]:
+    def _candidate_alignments(self, words: Sequence[str], voters: Iterable[int], min_votes: int) -> list[Alignment]:
+        """Align regions where at least `min_votes` of the `voters` (hypothesis indices) line up."""
         config = self._config
         diagonals: Counter[int] = Counter()
-        for i, word in enumerate(words):
-            positions = self._index.positions(word)
+        for i in voters:
+            positions = self._index.positions(words[i])
             if len(positions) > config.common_word_limit:
                 continue
             for position in positions:
@@ -134,7 +143,7 @@ class PositionEngine:
 
         chosen: list[int] = []
         for diagonal, votes in sorted(support.items(), key=lambda item: (-item[1], item[0])):
-            if votes < config.acquire_min_votes or len(chosen) >= config.acquire_max_candidates:
+            if votes < min_votes or len(chosen) >= config.acquire_max_candidates:
                 break
             if all(abs(diagonal - c) > tolerance for c in chosen):
                 chosen.append(diagonal)
@@ -154,6 +163,7 @@ class PositionEngine:
 
     def _track(self, t: float, words: Sequence[str]) -> list[Event]:
         config = self._config
+        streaks, self._streaks = self._streaks, {}
         corpus = self._index.words
         lo = max(0, self._pointer - config.track_back)
         hi = min(len(corpus), self._pointer + config.track_ahead)
@@ -197,6 +207,11 @@ class PositionEngine:
             needed = min(max(config.confirm_words, distinct) + extra, end - start)
             prefix = range(start, min(end, start + needed + config.prefix_slack))
             if sum(p in evidence for p in prefix) < needed:
+                continue
+
+            # A window edge can distort the next words into this ayah's opening for one hop only.
+            self._streaks[ordinal] = streaks.get(ordinal, 0) + 1
+            if self._streaks[ordinal] < config.confirm_windows:
                 continue
 
             events.append(AyahConfirmed(t, self._index.ref(ordinal), Mode.TRACK, alignment.score))
