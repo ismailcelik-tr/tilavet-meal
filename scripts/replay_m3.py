@@ -3,6 +3,7 @@
     uv run python scripts/replay_m3.py               # report with default EngineConfig
     uv run python scripts/replay_m3.py --sweep       # tune on dev streams only
     uv run python scripts/replay_m3.py --debug quran-asr-tiny/clean   # wrong + missed per stream
+    uv run python scripts/replay_m3.py --blind       # M4 blind set, aggregate only
 """
 
 import argparse
@@ -23,6 +24,9 @@ RAW = ROOT / "data" / "raw"
 STREAMS = ROOT / "data" / "derived" / "streams"
 ASR = ROOT / "data" / "derived" / "m3" / "asr"
 OUT = ROOT / "reports" / "m3-results.md"
+BLIND_STREAMS = ROOT / "data" / "derived" / "streams-blind"
+BLIND_ASR = ROOT / "data" / "derived" / "m4" / "asr-blind"
+BLIND_OUT = ROOT / "reports" / "m4-blind.md"
 
 COOLDOWN_S = 300.0
 SPLITS = ("dev", "test")
@@ -70,15 +74,16 @@ def rate(a: int, b: int) -> str:
 
 
 class Bench:
-    def __init__(self) -> None:
+    def __init__(self, streams: Path = STREAMS, asr: Path = ASR) -> None:
+        self.asr = asr
         quran = load_tanzil(RAW / "quran-simple-clean.txt")
         self.index = QuranIndex.build({ref: normalize(strip_basmala(ref, text)).split() for ref, text in quran.items()})
         self.units = meal_units(load_tanzil(RAW / "tr.diyanet.txt"))
         self.unit_of = {ref: (u.sura, u.first) for u in self.units for ref in u.refs}
-        self.streams = [json.loads(p.read_text()) for p in sorted(STREAMS.glob("*.json"))]
+        self.streams = [json.loads(p.read_text()) for p in sorted(streams.glob("*.json"))]
 
     def replay(self, model: str, condition: str, config: EngineConfig, meta: dict):
-        windows = (ASR / model / condition / f"{meta['id']}.windows.jsonl").read_text().splitlines()
+        windows = (self.asr / model / condition / f"{meta['id']}.windows.jsonl").read_text().splitlines()
         engine = PositionEngine(self.index, config)
         policy = EmissionPolicy(self.units, COOLDOWN_S)
         emissions, events = [], []
@@ -109,17 +114,17 @@ class Bench:
     def clip_cer(self, model: str, condition: str) -> float:
         refs, hyps = [], []
         for meta in self.streams:
-            for clip in map(json.loads, (ASR / model / condition / f"{meta['id']}.clips.jsonl").read_text().splitlines()):
+            for clip in map(json.loads, (self.asr / model / condition / f"{meta['id']}.clips.jsonl").read_text().splitlines()):
                 refs.append(clip["reference"])
                 hyps.append(clip["text"])
         return score(refs, hyps).cer
 
 
-def available() -> list[tuple[str, str]]:
+def available(bench: Bench) -> list[tuple[str, str]]:
     """(model, condition) runs whose ASR pass has finished every stream."""
-    expected = len(list(STREAMS.glob("*.json")))
+    expected = len(bench.streams)
     return sorted(
-        (p.parent.name, p.name) for p in ASR.glob("*/*") if len(list(p.glob("*.clips.jsonl"))) == expected
+        (p.parent.name, p.name) for p in bench.asr.glob("*/*") if len(list(p.glob("*.clips.jsonl"))) == expected
     )
 
 
@@ -144,7 +149,7 @@ def sweep(bench: Bench) -> None:
     for values in itertools.product(*SWEEP.values()):
         config = replace(EngineConfig(), **dict(zip(keys, values, strict=True)))
         cells = []
-        for model, condition in available():
+        for model, condition in available(bench):
             t = bench.run(model, condition, config, "dev")
             cells.append(f"{model}/{condition}: {rate(t.wrong, t.emissions)} {rate(t.recalled, t.occurrences)}")
         print(values, " | ".join(cells))
@@ -165,16 +170,16 @@ def report(bench: Bench) -> None:
     ]
     for split in SPLITS:
         lines += [f"## {split}", "", *HEADER]
-        for model, condition in available():
+        for model, condition in available(bench):
             lines.append(row(f"{model} / {condition}", bench.run(model, condition, config, split)))
         lines.append("")
 
     lines += ["## Koşulların ses tanıma hatası (ayet klipleri, tüm akışlar)", "", "| Koşu | CER |", "|---|---|"]
-    for model, condition in available():
+    for model, condition in available(bench):
         lines.append(f"| {model} / {condition} | {100 * bench.clip_cer(model, condition):.2f}% |")
 
     lines += ["", "## Okuyucu bazında (test, varsayılan config)", "", *HEADER]
-    for model, condition in available():
+    for model, condition in available(bench):
         for reciter in sorted({m["reciter"] for m in bench.streams if m["split"] == "test"}):
             subset = Bench.__new__(Bench)
             subset.__dict__ = {**bench.__dict__, "streams": [m for m in bench.streams if m["reciter"] == reciter]}
@@ -182,6 +187,32 @@ def report(bench: Bench) -> None:
 
     OUT.write_text("\n".join(lines) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
+
+
+def blind_report(bench: Bench) -> None:
+    """Aggregate only: the set is opened once, per-stream results stay unseen."""
+    config = EngineConfig()
+    lines = [
+        "# M4 kör set sonuçları (otomatik: scripts/replay_m3.py --blind)",
+        "",
+        f"EngineConfig: `{config}`",
+        "",
+        "Tanımlar `m3-results.md` ile aynı. Üst sınır: yanlış 0 ise üçler kuralı (%95, 3/meal), değilse yok.",
+        "",
+        HEADER[0].replace(" |", " | Yanlış üst sınır |", 1),
+        HEADER[1] + "---|",
+    ]
+    for model, condition in available(bench):
+        t = bench.run(model, condition, config, "blind")
+        bound = f"≤{rate(3, t.emissions)}" if t.wrong == 0 else "–"
+        lines.append(row(f"{model} / {condition}", t).replace(" |", f" | {bound} |", 1))
+
+    lines += ["", "## Ses tanıma hatası (ayet klipleri)", "", "| Koşu | CER |", "|---|---|"]
+    for model, condition in available(bench):
+        lines.append(f"| {model} / {condition} | {100 * bench.clip_cer(model, condition):.2f}% |")
+
+    BLIND_OUT.write_text("\n".join(lines) + "\n")
+    print(f"wrote {BLIND_OUT.relative_to(ROOT)}")
 
 
 def debug(bench: Bench, run: str) -> None:
@@ -210,7 +241,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sweep", action="store_true")
     parser.add_argument("--debug", metavar="MODEL/CONDITION")
+    parser.add_argument("--blind", action="store_true")
     args = parser.parse_args()
+
+    if args.blind:
+        blind_report(Bench(BLIND_STREAMS, BLIND_ASR))
+        return
 
     bench = Bench()
     if args.sweep:
