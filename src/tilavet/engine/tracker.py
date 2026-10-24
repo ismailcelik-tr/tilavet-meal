@@ -2,9 +2,9 @@
 
 ACQUIRE: position unknown. Vote candidate regions from exact word hits, align
 each, commit only if the best region beats every other region by a margin.
-Identical passages tie, so the engine waits for disambiguating words. Places
-where the winner's own rare words line up are aligned as rivals even if they
-got too few votes: a stray word must not hide a look-alike passage.
+Identical passages tie, so the engine waits for disambiguating words. Every
+place where the winner's corpus words line up is aligned as a rival: a stray
+or misheard word must not hide a look-alike passage.
 
 TRACK: align only around the current position. An ayah is confirmed once
 enough of its *opening* words match (ayahs are identified by their prefix;
@@ -99,13 +99,17 @@ class PositionEngine:
 
     def _acquire(self, t: float, words: Sequence[str]) -> list[Event]:
         config = self._config
-        alignments = self._candidate_alignments(words, range(len(words)), config.acquire_min_votes)
+        voters = list(enumerate(words))
+        alignments = self._candidate_alignments(words, voters, config.acquire_min_votes, config.acquire_max_candidates)
         if not alignments:
             return []
 
         best = max(alignments, key=lambda a: a.score)
-        # The vote threshold can hide look-alikes the winner beat only by a stray word; search them explicitly.
-        lookalikes = self._candidate_alignments(words, [h for h, _ in best.pairs], config.acquire_rival_votes)
+        # Look-alikes share the winner's corpus words, not the (maybe misheard) hypothesis words.
+        # All are aligned: a formula phrase can recur in hundreds of places.
+        corpus = self._index.words
+        lookalikes = self._candidate_alignments(words, [(h, corpus[p]) for h, p in best.pairs],
+                                                config.acquire_rival_votes, None)
         rivals = [a for a in alignments + lookalikes if not _overlaps(a, best)]
         runner_up = max((a.score for a in rivals), default=0)
 
@@ -124,12 +128,13 @@ class PositionEngine:
         self._confirmed = {current}
         return [AyahConfirmed(t, self._index.ref(current), Mode.ACQUIRE, best.score)]
 
-    def _candidate_alignments(self, words: Sequence[str], voters: Iterable[int], min_votes: int) -> list[Alignment]:
-        """Align regions where at least `min_votes` of the `voters` (hypothesis indices) line up."""
+    def _candidate_alignments(self, words: Sequence[str], voters: Iterable[tuple[int, str]], min_votes: int,
+                              limit: int | None) -> list[Alignment]:
+        """Align regions where at least `min_votes` (hypothesis index, word) voters line up; at most `limit`."""
         config = self._config
         diagonals: Counter[int] = Counter()
-        for i in voters:
-            positions = self._index.positions(words[i])
+        for i, word in voters:
+            positions = self._index.positions(word)
             if len(positions) > config.common_word_limit:
                 continue
             for position in positions:
@@ -140,7 +145,7 @@ class PositionEngine:
 
         chosen: list[int] = []
         for diagonal, votes in sorted(support.items(), key=lambda item: (-item[1], item[0])):
-            if votes < min_votes or len(chosen) >= config.acquire_max_candidates:
+            if votes < min_votes or (limit is not None and len(chosen) >= limit):
                 break
             if all(abs(diagonal - c) > tolerance for c in chosen):
                 chosen.append(diagonal)
