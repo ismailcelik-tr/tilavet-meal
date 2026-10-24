@@ -23,7 +23,8 @@ struct ContentView: View {
 
             Spacer()
             Button(pipeline.running ? "Durdur" : "Başlat") {
-                pipeline.running ? pipeline.stop() : start()
+                // A tap is a person listening: never reuse measurement arguments such as --mute.
+                pipeline.running ? pipeline.stop() : pipeline.start(threads: defaultThreads, mute: false, durationS: nil)
             }
             .buttonStyle(.borderedProminent)
         }
@@ -39,9 +40,11 @@ struct ContentView: View {
         }
     }
 
+    private let defaultThreads = 2
+
     private func start() {
-        pipeline.start(threads: Int(LaunchArgs.value("--threads") ?? "") ?? 2, mute: LaunchArgs.has("--mute"),
-                       durationS: Double(LaunchArgs.value("--duration") ?? ""))
+        pipeline.start(threads: Int(LaunchArgs.value("--threads") ?? "") ?? defaultThreads,
+                       mute: LaunchArgs.has("--mute"), durationS: Double(LaunchArgs.value("--duration") ?? ""))
     }
 
     private func span(_ unit: MealUnit) -> String {
