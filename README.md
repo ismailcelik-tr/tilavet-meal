@@ -11,7 +11,8 @@ Runtime translates nothing. It identifies the position in a closed corpus (6,236
 | M1 | Corpus, meal units, paper feasibility (no ML) | Done: [report](reports/m1-feasibility.md) (Turkish) |
 | M2 | Acoustic model bake-off on Mac | Done: [report](reports/m2-feasibility.md) (Turkish), NVIDIA FastConformer hybrid selected |
 | M3 | Position engine, offline real-time simulation | Done: [report](reports/m3-feasibility.md) (Turkish), 0 wrong meals clean/10 dB; NVIDIA 1.3% at 0 dB |
-| M4–M5 | Live mic + playback, robustness, go/no-go | Planned |
+| M4 | Live mic + headphone playback, loopback, blind set | Done: [report](reports/m4-feasibility.md) (Turkish), 0 wrong meals live; blind hard ~1%, mujawwad weakest; tiny primary |
+| M5 | Robustness (mujawwad, real recordings), go/no-go | Planned |
 
 ## Run
 
@@ -35,6 +36,14 @@ uv run python scripts/build_streams.py
 uv run --group onnx python scripts/asr_windows.py --model quran-asr-tiny --condition clean|noisy|hard
 uv run --group nemo python scripts/asr_windows.py --model nvidia-fc-rnnt --condition clean|noisy|hard
 uv run python scripts/replay_m3.py             # -> reports/m3-results.md
+
+# M4: loopback (MacBook speaker -> mic), blind set, live app
+uv run --group onnx --group audio python scripts/loopback.py --streams shuraim-2 --volume 50
+uv run python scripts/build_streams.py --set blind
+uv run --group onnx python scripts/asr_windows.py --set blind --model quran-asr-tiny --condition clean|noisy|hard
+uv run python scripts/replay_m3.py --blind     # -> reports/m4-blind.md
+uv run python scripts/render_meals.py          # macOS `say`, ~20 min, ~430 MB
+uv run --group onnx --group audio python scripts/live.py --output "<headphone name>"
 ```
 
 ## Data sources
