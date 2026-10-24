@@ -1,4 +1,4 @@
-# M4 kör set sonuçları (otomatik: scripts/replay_m3.py --blind)
+# Kör set sonuçları: blind (otomatik: scripts/replay_m3.py --set blind)
 
 EngineConfig: `EngineConfig(acquire_min_matched=4, acquire_min_score=6, acquire_margin=3, acquire_min_votes=3, acquire_max_candidates=8, acquire_rival_votes=2, diagonal_tolerance=8, common_word_limit=500, track_back=30, track_ahead=50, track_min_score=3, track_tie_slack=0, track_margin=2, confirm_words=2, distinct_window=3, prefix_slack=1, max_skip=2, jump_extra=1, lost_after=4, min_words_for_miss=3)`
 
@@ -23,6 +23,17 @@ Tanımlar `m3-results.md` ile aynı. Üst sınır: yanlış 0 ise üçler kural�
 | quran-asr-tiny / clean | 0.34% |
 | quran-asr-tiny / hard | 3.54% |
 | quran-asr-tiny / noisy | 0.84% |
+
+## 30 s duraklama ve ASR süresi
+
+| Koşu | Duraklamada meal (10 s sonra) | ASR süresi p50 / p90 (adım 1 s) |
+|---|---|---|
+| nvidia-fc-rnnt / clean | 0 | 0.191 / 0.202 s |
+| nvidia-fc-rnnt / hard | 0 | 0.190 / 0.201 s |
+| nvidia-fc-rnnt / noisy | 0 | 0.194 / 0.217 s |
+| quran-asr-tiny / clean | 0 | 0.037 / 0.041 s |
+| quran-asr-tiny / hard | 0 | 0.035 / 0.040 s |
+| quran-asr-tiny / noisy | 0 | 0.035 / 0.040 s |
 
 ## Okuyucu bazında
 
