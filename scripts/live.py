@@ -96,9 +96,10 @@ def main() -> None:
             stop.set()
             worker.join()
 
-    write_wav(OUT / f"{name}.wav", np.concatenate(recorded) if recorded else np.zeros(0, dtype=np.float32))
-    (OUT / f"{name}.live.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in log))
-    print(f"kaydedildi: {OUT / name}.{{wav,live.jsonl}}, overflows {mic.overflows}")
+        # Save before closing the stream: CoreAudio once hung in stop for minutes, holding the data in memory.
+        write_wav(OUT / f"{name}.wav", np.concatenate(recorded) if recorded else np.zeros(0, dtype=np.float32))
+        (OUT / f"{name}.live.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in log))
+        print(f"kaydedildi: {OUT / name}.{{wav,live.jsonl}}, overflows {mic.overflows}")
 
 
 if __name__ == "__main__":
