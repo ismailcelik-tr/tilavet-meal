@@ -1,0 +1,38 @@
+name: TilavetApp
+options:
+  bundleIdPrefix: com.ismailcelik
+  deploymentTarget:
+    iOS: "18.0"
+packages:
+  TilavetCore:
+    path: ../TilavetCore
+targets:
+  TilavetApp:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - Vendor/SherpaOnnx.swift
+      - path: Data
+        type: folder
+    dependencies:
+      - package: TilavetCore
+      - framework: Vendor/SherpaOnnxC.xcframework
+        embed: true
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: Tilavet Meal
+        UILaunchScreen: {}
+        UIBackgroundModes: [audio]
+        NSMicrophoneUsageDescription: Okunan ayeti tanımak için mikrofonu dinler.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ismailcelik.tilavet
+        DEVELOPMENT_TEAM: YE5W32UMGG
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "5.0"
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/Bridging.h
+        TARGETED_DEVICE_FAMILY: "1"

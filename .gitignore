@@ -7,5 +7,7 @@ data/derived/
 ios/**/.build/
 ios/**/.swiftpm/
 ios/TilavetApp/Vendor/
-ios/TilavetApp/Resources/
+ios/TilavetApp/Data/
 ios/TilavetApp/*.xcodeproj/
+ios/TilavetApp/Generated/
+ios/TilavetApp/.build/
