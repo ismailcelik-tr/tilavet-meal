@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from tilavet.corpus import AyahRef
 
-__all__ = ["Emission", "Segment", "StreamScore", "score_stream"]
+__all__ = ["Emission", "Segment", "StreamScore", "pause_emissions", "score_stream"]
 
 UnitKey = tuple[int, int]  # (sura, first ayah) of a meal unit
 
@@ -108,3 +108,9 @@ def score_stream(
         result.latency_from_end.append(hit.t - occurrence.end)
 
     return result
+
+
+def pause_emissions(truth: Sequence[Segment], emissions: Sequence[Emission], min_pause_s: float) -> int:
+    """Meals played inside silences of at least `min_pause_s`, after the last ayah's meal had its LATE_LIMIT_S."""
+    pauses = [s for s in truth if s.ref is None and s.end - s.start >= min_pause_s]
+    return sum(1 for p in pauses for e in emissions if p.start + LATE_LIMIT_S < e.t <= p.end)

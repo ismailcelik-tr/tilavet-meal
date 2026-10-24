@@ -1,7 +1,7 @@
 import pytest
 
 from tilavet.corpus import AyahRef
-from tilavet.eval import Emission, Segment, score_stream
+from tilavet.eval import Emission, Segment, pause_emissions, score_stream
 
 A1, A2, A3 = AyahRef(1, 1), AyahRef(1, 2), AyahRef(1, 3)
 UNIT_OF = {A1: (1, 1), A2: (1, 2), A3: (1, 2)}  # ayahs 2-3 share one meal unit
@@ -54,3 +54,15 @@ def test_missed_unit_lowers_recall():
     result = score_stream(TRUTH, [Emission(2.0, (1, 1))], UNIT_OF)
 
     assert (result.occurrences, result.recalled) == (2, 1)
+
+
+def test_emission_late_in_a_long_pause_counts():
+    assert pause_emissions(TRUTH, [Emission(22.0, (1, 2))], min_pause_s=15.0) == 1
+
+
+def test_last_ayahs_meal_early_in_a_pause_does_not_count():
+    assert pause_emissions(TRUTH, [Emission(19.0, (1, 2))], min_pause_s=15.0) == 0
+
+
+def test_short_pauses_are_ignored():
+    assert pause_emissions(TRUTH, [Emission(22.0, (1, 2))], min_pause_s=20.0) == 0
