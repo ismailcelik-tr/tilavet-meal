@@ -77,7 +77,12 @@ Aday çözümler:
 - (a) için: tartışmalı kelime kuralını (`track_margin`) Acquire'a da uygulamak.
 - (b) için: açılış kelimelerinin art arda iki pencerede görülmesini istemek. Maliyeti her onaya ~1 s gecikme.
 
-Seçim, dev ve eski test setinin simüle verisiyle yapılır. Her kural TDD ile eklenir. Gecikme maliyeti raporlanır.
+Seçim, dev ve eski test setinin simüle verisiyle yapılır.
+
+**Sonuç (2026-10-24, İsmail):**
+- Rakip arama kabul edildi: (a) giderildi, bedeli yok.
+- Kalıcılık reddedildi: tek kazancı, doğru sıradaki ayetin birkaç saniye erken çalınması. Bu kabul edilebilir bulundu. Bedeli ~1 s gecikme ve 2,5 puana kadar recall kaybı.
+- **Kurallar `993514c`'de donduruldu.** Kör set açılana kadar motor değişmez. Her kural TDD ile eklenir. Gecikme maliyeti raporlanır.
 
 ## Hata durumları
 
