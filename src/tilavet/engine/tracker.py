@@ -64,6 +64,7 @@ class EngineConfig:
     track_min_score: int = 3
     track_tie_slack: int = 0
     track_margin: int = 2  # words a rival this close elsewhere also explains are contested (near-duplicates)
+    past_margin: int = 3  # rivals over ayahs already recited: likely a repetition, contest more readily
     confirm_words: int = 2  # minimum; raised per ayah to what sets it apart from its neighbours
     distinct_window: int = 3  # neighbours considered: ayahs within this distance + restarts in the previous one
     prefix_slack: int = 1  # ASR may drop one of the opening words
@@ -190,7 +191,7 @@ class PositionEngine:
         self._misses = 0
         self._pointer = alignment.corpus_end
 
-        rivals = [a for a in alignments if not _overlaps(a, alignment) and a.score > alignment.score - config.track_margin]
+        rivals = [a for a in alignments if not _overlaps(a, alignment) and a.score > alignment.score - self._margin(a)]
         contested = {h for rival in rivals for h, _ in rival.pairs}
         evidence = {position for h, position in alignment.pairs if h not in contested}
 
@@ -215,6 +216,10 @@ class PositionEngine:
             self._last_confirmed = max(self._last_confirmed, ordinal)
 
         return events
+
+    def _margin(self, rival: Alignment) -> int:
+        recited = all(self._index.ordinal_at(p) in self._confirmed for p in rival.positions)
+        return self._config.past_margin if recited else self._config.track_margin
 
 
 def _distinct_prefixes(index: QuranIndex, window: int) -> list[int | None]:

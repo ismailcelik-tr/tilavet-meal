@@ -30,3 +30,16 @@ def test_formula_phrase_does_not_commit(index):
 def test_misheard_words_still_find_the_lookalike(index):
     # minshawi-mujawwad-1: 45:33 and 39:48 differ by one later word.
     assert feed(PositionEngine(index), "فوبدا لهم سييات موا") == []
+
+
+def test_going_back_is_not_progress(index):
+    # muhammad-ayyoub-1: after 22:56 the reciter repeats 22:55; its "الذين كفروا" matches 22:57's opening.
+    engine = PositionEngine(index)
+    texts = [
+        "وليعلم الذين اوتوا العلم انه الحق من ربك فيومنوا به فتخبت له قلوبهم وان الله لهاد الذين امنوا الى صراط مستقيم "
+        "ولا يزال الذين كفروا في مريه منه حتي تاتيهم الساعه بغته او ياتيهم عذاب يوم عقيم",
+        "الملك يوميذ لله يحكم بينهم فالذين امنوا وعملوا الصالحات في جنات النعيم",
+        "في جنات النعيولا يزال الذين كفر",
+    ]
+
+    assert AyahRef(22, 57) not in feed(engine, *texts)
