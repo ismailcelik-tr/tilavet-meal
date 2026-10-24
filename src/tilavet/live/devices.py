@@ -10,7 +10,7 @@ import sounddevice as sd
 
 from tilavet.audio import SAMPLE_RATE
 
-__all__ = ["Kind", "Microphone", "default_output", "find_device", "play"]
+__all__ = ["Kind", "Microphone", "default_output", "find_device", "outputs", "play"]
 
 
 class Kind(Enum):
@@ -32,6 +32,10 @@ def find_device(name: str, kind: Kind) -> int:
 
 def default_output() -> str:
     return _nfc(sd.query_devices(kind="output")["name"])
+
+
+def outputs() -> list[str]:
+    return [_nfc(d["name"]) for d in sd.query_devices() if d["max_output_channels"] > 0]
 
 
 class Microphone:

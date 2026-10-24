@@ -4,6 +4,7 @@ Ayah recordings (EveryAyah) are concatenated in mushaf order with injected
 repetitions, skips and long pauses. Writes 16 kHz wav + truth json per stream.
 """
 
+import argparse
 import json
 import random
 import urllib.request
@@ -19,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 AUDIO = RAW / "everyayah"
 OUT = ROOT / "data" / "derived" / "streams"
+BLIND_OUT = ROOT / "data" / "derived" / "streams-blind"
 
 USER_AGENT = "tilavet-meal/0.1 (research prototype)"
 AYAH_URL = "https://everyayah.com/data/{folder}/{sura:03d}{aya:03d}.mp3"
@@ -32,10 +34,19 @@ RECITERS = {
     "abdulbaset-mujawwad": ("Abdul_Basit_Mujawwad_128kbps", "test"),
     "sudais": ("Abdurrahmaan_As-Sudais_192kbps", "test"),
 }
+# Held out until the engine rules are frozen (M4); kept apart so routine replays never see it.
+BLIND_RECITERS = {
+    "alafasy": ("Alafasy_128kbps", "blind"),
+    "maher-muaiqly": ("MaherAlMuaiqly128kbps", "blind"),
+    "muhammad-ayyoub": ("Muhammad_Ayyoub_128kbps", "blind"),
+    "minshawi-mujawwad": ("Minshawy_Mujawwad_192kbps", "blind"),
+}
 STREAMS_PER_RECITER = 5
+BLIND_STREAMS_PER_RECITER = 10
 MAX_AYAHS = 12
 MAX_SECONDS = 240.0
 SEED = 11
+BLIND_SEED = 29
 
 P_REPEAT = 0.12
 P_SKIP = 0.06
@@ -124,21 +135,32 @@ def _write_wav(path: Path, audio: np.ndarray) -> None:
         w.writeframes(pcm.tobytes())
 
 
-def main() -> None:
-    refs = sorted(load_tanzil(RAW / "quran-simple-clean.txt"))
-    OUT.mkdir(parents=True, exist_ok=True)
-    rng = random.Random(SEED)
+SETS = {
+    "main": (RECITERS, STREAMS_PER_RECITER, SEED, OUT),
+    "blind": (BLIND_RECITERS, BLIND_STREAMS_PER_RECITER, BLIND_SEED, BLIND_OUT),
+}
 
-    for name, (folder, split) in RECITERS.items():
-        for n in range(STREAMS_PER_RECITER):
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--set", default="main", choices=sorted(SETS))
+    args = parser.parse_args()
+
+    reciters, per_reciter, seed, out = SETS[args.set]
+    refs = sorted(load_tanzil(RAW / "quran-simple-clean.txt"))
+    out.mkdir(parents=True, exist_ok=True)
+    rng = random.Random(seed)
+
+    for name, (folder, split) in reciters.items():
+        for n in range(per_reciter):
             stream_id = f"{name}-{n}"
             plan = _script(rng, _passage(rng, refs))
             audio, truth = _render(folder, plan, rng)
 
-            _write_wav(OUT / f"{stream_id}.wav", audio)
+            _write_wav(out / f"{stream_id}.wav", audio)
             meta = {"id": stream_id, "reciter": name, "split": split, "duration": len(audio) / SAMPLE_RATE,
                     "segments": truth}
-            (OUT / f"{stream_id}.json").write_text(json.dumps(meta) + "\n")
+            (out / f"{stream_id}.json").write_text(json.dumps(meta) + "\n")
             print(f"{stream_id}: {meta['duration']:.0f} s, {sum(s['ref'] is not None for s in truth)} ayah segments")
 
 

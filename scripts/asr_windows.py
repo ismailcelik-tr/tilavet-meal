@@ -1,6 +1,6 @@
 """Run one recognizer over every stream as if live; cache window hypotheses.
 
-    uv run --group <group> python scripts/asr_windows.py --model <name> --condition clean|noisy|hard
+    uv run --group <group> python scripts/asr_windows.py --model <name> --condition clean|noisy|hard [--set blind]
 
 Per stream writes <id>.windows.jsonl (t, text, compute_s) and <id>.clips.jsonl
 (each truth ayah transcribed on its own, to measure the condition's CER).
@@ -23,8 +23,10 @@ from tilavet.eval import degrade
 from tilavet.stream import sliding_windows
 
 ROOT = Path(__file__).resolve().parents[1]
-STREAMS = ROOT / "data" / "derived" / "streams"
-OUT = ROOT / "data" / "derived" / "m3" / "asr"
+SETS = {
+    "main": (ROOT / "data" / "derived" / "streams", ROOT / "data" / "derived" / "m3" / "asr"),
+    "blind": (ROOT / "data" / "derived" / "streams-blind", ROOT / "data" / "derived" / "m4" / "asr-blind"),
+}
 QURAN = ROOT / "data" / "raw" / "quran-simple-clean.txt"
 
 HOP_S = 1.0
@@ -43,20 +45,23 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, choices=sorted(MODELS))
     parser.add_argument("--condition", required=True, choices=sorted(SNR_DB))
+    parser.add_argument("--set", default="main", choices=sorted(SETS))
     args = parser.parse_args()
+
+    streams, cache = SETS[args.set]
 
     quran = load_tanzil(QURAN)
     recognizer = load(args.model)
-    out = OUT / args.model / args.condition
+    out = cache / args.model / args.condition
     out.mkdir(parents=True, exist_ok=True)
 
-    for meta_path in sorted(STREAMS.glob("*.json")):
+    for meta_path in sorted(streams.glob("*.json")):
         meta = json.loads(meta_path.read_text())
         # Clips are written last, so their presence marks a finished stream (resume after interruption).
         if (out / f"{meta['id']}.clips.jsonl").exists():
             continue
 
-        audio = _read_wav(STREAMS / f"{meta['id']}.wav")
+        audio = _read_wav(streams / f"{meta['id']}.wav")
         if args.condition != "clean":
             audio = degrade(audio, SNR_DB[args.condition], seed=zlib.crc32(meta["id"].encode()))
 
