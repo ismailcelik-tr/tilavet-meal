@@ -12,7 +12,8 @@ Runtime translates nothing. It identifies the position in a closed corpus (6,236
 | M2 | Acoustic model bake-off on Mac | Done: [report](reports/m2-feasibility.md) (Turkish), NVIDIA FastConformer hybrid selected |
 | M3 | Position engine, offline real-time simulation | Done: [report](reports/m3-feasibility.md) (Turkish), 0 wrong meals clean/10 dB; NVIDIA 1.3% at 0 dB |
 | M4 | Live mic + headphone playback, loopback, blind set | Done: [report](reports/m4-feasibility.md) (Turkish), 0 wrong meals live; blind hard ~1%, mujawwad weakest; tiny primary |
-| M5 | Robustness (mujawwad, real recordings), go/no-go | Planned |
+| M5 | Robustness, new blind set, non-Quran speech, go/no-go | Done: [report](reports/m5-feasibility.md) (Turkish), 0 wrong of 837 blind meals; GO recommended |
+| M6 | Mobile architecture spike | Planned (if GO) |
 
 ## Run
 
@@ -41,9 +42,16 @@ uv run python scripts/replay_m3.py             # -> reports/m3-results.md
 uv run --group onnx --group audio python scripts/loopback.py --streams shuraim-2 --volume 50
 uv run python scripts/build_streams.py --set blind
 uv run --group onnx python scripts/asr_windows.py --set blind --model quran-asr-tiny --condition clean|noisy|hard
-uv run python scripts/replay_m3.py --blind     # -> reports/m4-blind.md
+uv run python scripts/replay_m3.py --set blind # -> reports/m4-blind.md
 uv run python scripts/render_meals.py          # macOS `say`, ~20 min, ~430 MB
 uv run --group onnx --group audio python scripts/live.py --output "<headphone name>"
+
+# M5: blind2 set (tiny), rule comparison on opened sets, process sampling
+uv run python scripts/build_streams.py --set blind2
+uv run --group onnx python scripts/asr_windows.py --set blind2 --model quran-asr-tiny --condition clean|noisy|hard
+uv run python scripts/replay_m3.py --tune past_margin=3   # opened sets only
+uv run python scripts/replay_m3.py --set blind2          # -> reports/m5-blind.md
+uv run python scripts/sample_process.py <pid>
 ```
 
 ## Data sources
