@@ -1,5 +1,4 @@
 import hashlib
-from dataclasses import replace
 
 import pytest
 
@@ -50,8 +49,7 @@ SURA_6 = {
     AyahRef(6, 5): [token(6, "v", w) for w in range(3)],
 }
 ALL = {**SURA_1, **SURA_2, **SURA_3, **SURA_4, **SURA_5, **SURA_6}
-CONFIG = EngineConfig(acquire_min_matched=3, acquire_min_score=5, acquire_margin=3, acquire_min_votes=2,
-                      confirm_windows=1)
+CONFIG = EngineConfig(acquire_min_matched=3, acquire_min_score=5, acquire_margin=3, acquire_min_votes=2)
 
 
 def words(*refs: tuple[int, int], take: int | None = None) -> list[str]:
@@ -217,20 +215,3 @@ def test_acquire_sees_lookalikes_that_got_fewer_votes():
     assert engine.feed(1.0, [STRAY, *PHRASE]) == []
     assert engine.mode is Mode.ACQUIRE
 
-
-def test_track_confirmation_needs_two_windows():
-    engine = PositionEngine(QuranIndex.build(ALL), replace(CONFIG, confirm_windows=2))
-    engine.feed(1.0, words((1, 1), (1, 2)))
-
-    assert confirmed(engine.feed(2.0, words((1, 2)) + words((1, 3), take=2))) == []
-    assert confirmed(engine.feed(3.0, words((1, 2)) + words((1, 3), take=3))) == [AyahRef(1, 3)]
-
-
-def test_one_window_glimpse_is_dropped():
-    engine = PositionEngine(QuranIndex.build(ALL), replace(CONFIG, confirm_windows=2))
-    engine.feed(1.0, words((1, 1), (1, 2)))
-    engine.feed(2.0, words((1, 2)) + words((1, 3), take=2))
-    engine.feed(3.0, words((1, 2)))
-
-    assert confirmed(engine.feed(4.0, words((1, 2)) + words((1, 3), take=2))) == []
-    assert confirmed(engine.feed(5.0, words((1, 2)) + words((1, 3), take=3))) == [AyahRef(1, 3)]

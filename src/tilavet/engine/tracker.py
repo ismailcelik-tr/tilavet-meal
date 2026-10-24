@@ -67,7 +67,6 @@ class EngineConfig:
     confirm_words: int = 2  # minimum; raised per ayah to what sets it apart from its neighbours
     distinct_window: int = 3  # neighbours considered: ayahs within this distance + restarts in the previous one
     prefix_slack: int = 1  # ASR may drop one of the opening words
-    confirm_windows: int = 1  # consecutive windows an ayah's opening must be seen in
     max_skip: int = 2  # ayahs a reciter may skip and still count as sequential
     jump_extra: int = 1
     lost_after: int = 4  # consecutive non-matching hops
@@ -82,7 +81,6 @@ class PositionEngine:
         self._pointer = 0
         self._last_confirmed = -1
         self._confirmed: set[int] = set()
-        self._streaks: dict[int, int] = {}
         self._misses = 0
         self._distinct = _distinct_prefixes(index, config.distinct_window)
 
@@ -121,7 +119,6 @@ class PositionEngine:
         self._mode = Mode.TRACK
         self._pointer = best.corpus_end
         self._misses = 0
-        self._streaks = {}
         current = self._index.ordinal_at(best.positions[-1])
         self._last_confirmed = current
         self._confirmed = {current}
@@ -163,7 +160,6 @@ class PositionEngine:
 
     def _track(self, t: float, words: Sequence[str]) -> list[Event]:
         config = self._config
-        streaks, self._streaks = self._streaks, {}
         corpus = self._index.words
         lo = max(0, self._pointer - config.track_back)
         hi = min(len(corpus), self._pointer + config.track_ahead)
@@ -207,11 +203,6 @@ class PositionEngine:
             needed = min(max(config.confirm_words, distinct) + extra, end - start)
             prefix = range(start, min(end, start + needed + config.prefix_slack))
             if sum(p in evidence for p in prefix) < needed:
-                continue
-
-            # A window edge can distort the next words into this ayah's opening for one hop only.
-            self._streaks[ordinal] = streaks.get(ordinal, 0) + 1
-            if self._streaks[ordinal] < config.confirm_windows:
                 continue
 
             events.append(AyahConfirmed(t, self._index.ref(ordinal), Mode.TRACK, alignment.score))
