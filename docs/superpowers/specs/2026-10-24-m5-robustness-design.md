@@ -20,12 +20,17 @@ Birincil model **tiny** (M4 önerisi). NVIDIA yalnız ayar verisinde, karşıla�
 
 **Ayar verisi:** dev + eski test + M4 kör seti (artık açık), mevcut ASR önbelleğiyle. Hard koşul ağırlıklıdır.
 
-| Mekanizma (M4) | Kural | Seçenekler |
+Kök neden analizi (spec yazıldıktan sonra, M4 vakaları üzerinde):
+
+- **Mekanizma 1:** `و` farkı sorun değil; bulanık hizalama 21:19'a zaten 9 puan veriyor (24:41: 10). 21:19 hiç hizalanmıyor, çünkü pencerenin nadir kelimeleri (`السماوات`, `والأرض`) ~200 yerde hizalanıyor ve aday sınırı 8. 21:19 120. sırada.
+- **Mekanizma 3:** 45:33 hiç aday olmuyor. Rakip arama hipotezin kelimeleriyle oy topluyor; bulanık eşleşen kelimeler (`فوبدا`, `سييات`) oy vermiyor.
+- **Mekanizma 4:** 22:55'in tekrarı rakip olarak bulunuyor ama skoru (5) kazananın (7) `track_margin` (2) sınırının altında; kelimeler tartışmalı sayılmıyor. `track_margin = 3` vakayı düzeltiyor.
+
+| Mekanizma (M4) | Kural | Alternatif |
 |---|---|---|
-| 1. Kalıp ifade + pencere kenarı (4 yanlış) | **A:** Rakip aramada kelime başındaki `و` / `ف` farkı yakın eşleşme sayılır. Kesilmiş `وله` → `له`, 21:19'u rakip yapar; marj tutmaz. | **B:** Acquire'da en az N nadir kelime şartı. İkisi de ölçülür, veriyle seçilir. |
-| 3. Lost sonrası benzer ayet (1 yanlış) | Takip son T saniye içinde kaybolduysa, son konumdan uzak adaylar ek marj ister. | |
-| 4. Tekrarı ilerleme sanmak (1 yanlış) | Sıradaki ayetin onayındaki kelimeler daha önce onaylanmış yakın bir ayeti de aynı ölçüde açıklıyorsa tartışmalı sayılır; kanıt olmaz. | |
-| 2. NVIDIA halüsinasyonu (2 yanlış) | Ayrı kural yok; tiny birincil. B seçilirse dolaylı olarak kapsanır. | |
+| 1 ve 3 (5 yanlış) | **L:** Benzer pasaj araması, kazananın eşleştiği **derlem kelimeleriyle** oy toplar ve aday sınırı uygulanmaz. Prototip: iki vaka da çözülüyor; Acquire adımı ~13 ms. | **B:** Acquire'da en az N nadir kelime şartı; L yetmezse ölçülür. |
+| 4 (1 yanlış) | **P:** Zaten onaylanmış ayetlerdeki rakipler daha geniş marjla (`past_margin = 3`) tartışmalı sayılır. | Global `track_margin = 3`: vakayı çözüyor, bir meali 2 s geciktiriyor. Veriyle karşılaştırılır. |
+| 2. NVIDIA halüsinasyonu (2 yanlış) | Ayrı kural yok; tiny birincil. | |
 
 Kural ve parametreler kesin değil; ayar sırasında verinin gösterdiğine göre değişebilir. Değişmeyecek olanlar:
 
@@ -69,7 +74,7 @@ Kural ve parametreler kesin değil; ayar sırasında verinin gösterdiğine gör
 
 ## 5. Kaynak kullanımı
 
-- Kur'an dışı konuşma oturumunda `live.py` süreci 5 s arayla örneklenir: CPU %, RSS. RSS, sürecin RAM'de kapladığı alandır.
+- Kur'an dışı konuşma oturumunda `live.py` süreci 5 s arayla `ps` ile örneklenir: CPU %, RSS. RSS, sürecin RAM'de kapladığı alandır. Yeni bağımlılık yok.
 - **RTF** = pencere başına ASR süresi ÷ adım (1 s). Canlı zincir her adımda 12 s'lik pencereyi işler; yük budur.
 - **Kapı:** RTF ≤ 0.3, RAM ≤ 1.5 GB.
 
@@ -100,7 +105,7 @@ Okuyucu çeşitliliği kapısı ölçülür ve raporlanır, ama tek başına NO-
 | `scripts/asr_windows.py` | `blind2` seti |
 | `scripts/replay_m3.py` | Ayar raporu (üç setin hepsi) ve `blind2` raporu; 30 s duraklama metriği |
 | `src/tilavet/eval` | Duraklama metriği (TDD) |
-| `scripts/live.py` | İsteğe bağlı kaynak örnekleme (`psutil`) |
+| `scripts/sample_process.py` | `ps` ile CPU ve RSS örnekleme |
 | `reports/m5-*.md` | Sonuçlar ve karar raporu |
 
 ## Çalıştırma sırası
