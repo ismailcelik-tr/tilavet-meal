@@ -10,7 +10,7 @@ Runtime translates nothing. It identifies the position in a closed corpus (6,236
 |---|---|---|
 | M1 | Corpus, meal units, paper feasibility (no ML) | Done: [report](reports/m1-feasibility.md) (Turkish) |
 | M2 | Acoustic model bake-off on Mac | Done: [report](reports/m2-feasibility.md) (Turkish), NVIDIA FastConformer hybrid selected |
-| M3 | Position engine, offline real-time simulation | In progress: engine + [interim results](reports/m3-results.md) |
+| M3 | Position engine, offline real-time simulation | Done: [report](reports/m3-feasibility.md) (Turkish), 0 wrong meals clean/10 dB; NVIDIA 1.3% at 0 dB |
 | M4–M5 | Live mic + playback, robustness, go/no-go | Planned |
 
 ## Run
@@ -29,6 +29,12 @@ uv run --group nemo python scripts/bench_asr.py --model nvidia-fc-ctc --set smok
 uv run --group mlx  python scripts/bench_asr.py --model whisper-large-v3-turbo --set smoke
 uv run python scripts/report_m2.py --set smoke
 # held-out benchmark (gated): see scripts/build_qlab_set.py, then --set qlab
+
+# M3: ASR passes one at a time (shared CPU skews measured latency)
+uv run python scripts/build_streams.py
+uv run --group onnx python scripts/asr_windows.py --model quran-asr-tiny --condition clean|noisy|hard
+uv run --group nemo python scripts/asr_windows.py --model nvidia-fc-rnnt --condition clean|noisy|hard
+uv run python scripts/replay_m3.py             # -> reports/m3-results.md
 ```
 
 ## Data sources
