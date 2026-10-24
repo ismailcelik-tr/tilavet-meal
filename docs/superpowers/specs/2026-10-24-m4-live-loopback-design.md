@@ -19,20 +19,26 @@ Tarih: 2026-10-24 · Onay: İsmail (yaklaşım A, tam set) · Plan: M4 + Bölüm
 
 Her akış hoparlörden bir kez çalınır. Aynı sırada:
 
-- Mikrofon sesi wav dosyasına yazılır. Bu kayıt, M3 boru hattında yeni bir koşul olur: `room`. Önce `asr_windows.py --condition room`, sonra `replay_m3.py`.
+- Mikrofon sesi wav dosyasına yazılır (inceleme için; revizyon sonrası iki modelle yeniden oynatma yapılmıyor, bkz. Setler).
 - Mikrofon sesi canlı boru hattına da girer: tiny → `PositionEngine` → `EmissionPolicy` → `MealPlayer`. Her karar zaman damgasıyla loglanır.
 - NVIDIA'nın gecikmesi, M3'teki gibi ölçülen işlem süresiyle replay'den hesaplanır. Canlıda yalnız tiny çalışır, çünkü CPU'yu kayıtla paylaşmaz.
 - Gözetimsiz oturumda meal sesi sessiz çıkışa gider; hoparlöre gitseydi mikrofona geri girerdi. Çalma anı aynı kuyruk kurallarıyla hesaplanır. AirPods çıkış gecikmesi ayrıca tık testiyle ölçülüp eklenir.
 
 **Zaman hizalama.** Kayıt, referans wav ile cross-correlation yöntemiyle karşılaştırılır; bulunan ofset hoparlör → mikrofon gecikmesidir. Ground truth zamanları bu ofset kadar kaydırılır.
 
-## Setler (~2,5 saat sesli çalma, bir kez)
+## Setler
 
-| Set | Süre | Kullanım |
+**Revizyon (smoke sonrası, İsmail onayı):** Smoke'ta (`shuraim-2`) oda kaydının CER'i clean ile aynı çıktı (%0,10), SNR 29 dB. MacBook hoparlöründen aynı kasadaki mikrofona giden yol akustik zorluk eklemiyor. Bu yüzden:
+
+| Set | Sesli süre | Kullanım |
 |---|---|---|
-| Dev: Husary, Shuraim | 27,5 dk | Düzeltmenin ayarı |
-| Eski test: 4 okuyucu | 58,7 dk | Simülasyon ile oda sesinin karşılaştırması; ayar (kör değil) |
-| Yeni kör set: 4 okuyucu | ~60 dk | Dondurulmuş kuralların tek sınavı |
+| Canlı oturum: eski testten 8 akış | ~33 dk | Yalnız canlı zincirin gecikmesi ve kararlılığı |
+| Dev + eski test | 0 | Düzeltmenin ayarı, mevcut simüle önbellekle (hard ağırlıklı) |
+| Yeni kör set: 4 okuyucu | 0 | Dondurulmuş kuralların tek sınavı; bilgisayarda clean / noisy / hard |
+
+Canlı oturumda çalınan akışlar: `abdulbaset-mujawwad-1`, `abdulbaset-mujawwad-4`, `hani-rifai-3`, `hani-rifai-4`, `minshawi-0`, `minshawi-1`, `sudais-0`, `sudais-4`.
+
+Oturum sırasında bilgisayar hafifçe kullanılabilir. Yasak olanlar: ses çalan uygulamalar (Rahatsız Etmeyin açık), mikrofon kullanan uygulamalar, ağır CPU işi.
 
 **Kör set:**
 - Aday okuyucular: Alafasy, Maher al-Muaiqly, Muhammad Ayyoub, Minshawi Mücevved. Erişilebilirlik kurulumda kontrol edilir.
@@ -71,7 +77,7 @@ Aday çözümler:
 - (a) için: tartışmalı kelime kuralını (`track_margin`) Acquire'a da uygulamak.
 - (b) için: açılış kelimelerinin art arda iki pencerede görülmesini istemek. Maliyeti her onaya ~1 s gecikme.
 
-Seçim, dev ve eski test setinin `room` verisiyle yapılır. Her kural TDD ile eklenir. Gecikme maliyeti raporlanır.
+Seçim, dev ve eski test setinin simüle verisiyle yapılır. Her kural TDD ile eklenir. Gecikme maliyeti raporlanır.
 
 ## Hata durumları
 
@@ -93,9 +99,9 @@ TDD ile yazılacak saf parçalar:
 ## Çalıştırma sırası
 
 1. **Smoke run (~3,5 dk):** tek bir dev akışı (`shuraim-2`, 192 s). Ortamı, mikrofon iznini, ses seviyesini ve hizalamayı doğrular. Tam oturumdan önce İsmail'e sonuç sunulur.
-2. Tam kayıt oturumu: dev + eski test + kör set. Gözetimsiz, kaldığı yerden devam eder.
+2. Canlı oturum: eski testten 8 akış, ~33 dk. Kaldığı yerden devam eder.
 3. Tık testi: AirPods çıkış gecikmesi (manuel, ~2 dk).
-4. `room` ASR geçişleri (sırayla) ve replay. Düzeltme dev ve eski test üzerinde yapılır.
+4. Düzeltme, dev ve eski test üzerinde. Kör set kurulur, ASR geçişleri sırayla yapılır, sonuçlara bakılmaz.
 5. Kuralları dondurma (onay) → kör seti açma (onay).
 6. Canlı deneme: İsmail, gerçek kaynakla (~30 dk).
 7. M4 raporu.
@@ -104,8 +110,8 @@ TDD ile yazılacak saf parçalar:
 
 - **Gecikme**, AirPods dahil: meal başlangıcı − birim sonu p50 ≤ 1,5 s, p90 ≤ 3 s.
 - **Birikme:** 15 s'yi aşan bekleme yok.
-- **`room`:** yanlış ≤ %1, recall ≥ %85.
-- **Kör set:** aynı eşikler; ayrıca üçler kuralıyla üst sınır.
+- **Canlı oturum:** yanlış ≤ %1, recall ≥ %85. Not: oda koşulu clean'e eşdeğer.
+- **Kör set:** Bölüm 6 koşul eşikleri (clean = stüdyo, hard = telefon/canlı); ayrıca üçler kuralıyla üst sınır.
 
 ## Kapsam dışı
 
