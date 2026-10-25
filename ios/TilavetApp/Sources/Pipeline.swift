@@ -15,11 +15,11 @@ final class Pipeline: ObservableObject {
     /// Where meals go when the sound is on: the headphone name, or nil for the loudspeaker.
     @Published private(set) var headphoneName = AudioRoute.headphoneName()
 
-    private static let hopS = 1.0
-    private static let windowS = 12.0
-    private static let cooldownS = 300.0
-    private static let maxWaitS = 15.0
-    private static let metricsS = 5.0
+    nonisolated private static let hopS = 1.0
+    nonisolated private static let windowS = 12.0
+    nonisolated private static let cooldownS = 300.0
+    nonisolated private static let maxWaitS = 15.0
+    nonisolated private static let metricsS = 5.0
     private static let replayWithinS = 30.0
     private static let hintAfterS = 10.0
     private static let searchHint = "Kısa ve sık geçen ifadelerde âyet hemen bulunamayabilir; okumaya devam edin."
@@ -171,7 +171,10 @@ final class Pipeline: ObservableObject {
 
         func start(threads: Int, notify: @escaping (Update) -> Void) {
             self.notify = notify
-            queue.async {
+            queue.async { [weak self] in
+                guard let self else {
+                    return
+                }
                 do {
                     try self.load(threads: threads)
                     let input = AudioInput()
