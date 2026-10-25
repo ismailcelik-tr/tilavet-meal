@@ -1,4 +1,4 @@
-/// Two-mode position tracker over ASR window hypotheses; mirrors tilavet.engine.tracker (rules frozen at 398b251).
+/// Two-mode position tracker over ASR window hypotheses; mirrors tilavet.engine.tracker (rules as of 75a100e).
 public struct EngineConfig: Sendable {
     var acquireMinMatched = 4
     var acquireMinScore = 6
@@ -6,6 +6,9 @@ public struct EngineConfig: Sendable {
     var acquireMinVotes = 3
     var acquireMaxCandidates = 8
     var acquireRivalVotes = 2  // the winner's corpus words lining up elsewhere: a look-alike passage
+    var acquireBackfill = 2  // earlier heard ayahs of the winning match also confirmed; a short opening ayah (103:1)
+    var acquireBackfillAgeS = 7.0  // older ones are skipped: a meal > 10 s after its ayah misleads
+    var windowS = 12.0  // ASR window, to estimate how long ago a word was heard
     var diagonalTolerance = 8  // words; ASR insertions/deletions shift the diagonal
     var commonWordLimit = 500  // words with more occurrences don't vote
     var trackBack = 30
@@ -80,9 +83,26 @@ public final class PositionEngine {
         pointer = best.corpusEnd
         misses = 0
         let current = index.ordinalAt(best.positions.last!)
+        let ordinals = backfill(words.count, best, current) + [current]
         lastConfirmed = current
-        confirmed = [current]
-        return [.confirmed(t: t, ref: index.ref(current), mode: .acquire, score: best.score)]
+        confirmed = Set(ordinals)
+        return ordinals.map { .confirmed(t: t, ref: index.ref($0), mode: .acquire, score: best.score) }
+    }
+
+    /// Earlier ayahs of the match with a heard word, recent enough for their meal to still make sense. Age is
+    /// estimated from the words after an ayah's last matched word, assuming words spread evenly over the window.
+    private func backfill(_ hypCount: Int, _ best: Alignment, _ current: Int) -> [Int] {
+        if config.acquireBackfill == 0 {
+            return []
+        }
+
+        var lastHeard: [Int: Int] = [:]
+        for pair in best.pairs {
+            lastHeard[index.ordinalAt(pair.pos)] = pair.hyp
+        }
+        let earlier = lastHeard.keys.filter { $0 < current }.sorted().suffix(config.acquireBackfill)
+        let secondsPerWord = config.windowS / Double(hypCount)
+        return earlier.filter { Double(hypCount - 1 - lastHeard[$0]!) * secondsPerWord <= config.acquireBackfillAgeS }
     }
 
     /// Align regions where at least `minVotes` (hypothesis index, word) voters line up; at most `limit`.
