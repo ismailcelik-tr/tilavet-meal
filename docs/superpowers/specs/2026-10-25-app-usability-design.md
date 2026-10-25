@@ -60,6 +60,9 @@ Tek kontrol: ses açık / kapalı.
 - Kulaklıksız açıkken çıkış hoparlöre zorlanır (`overrideOutputAudioPort(.speaker)`); bugünkü ahize davranışı kalkar.
 - **Varsayılan:** App kulaklık bağlıyken açılırsa açık, değilse kapalı.
 - **Kulaklık çıkarsa** (rota değişimi, `oldDeviceUnavailable`) ses kapanır. Hoparlöre yalnız kullanıcı açınca geçilir.
+- **Kulaklık bağlanırsa** (`newDeviceAvailable`) ses açılır (İsmail, cihaz denemesi).
+- Durum satırının altında sesin nereye gittiği yazar: "Kulaklık: <ad>", "Telefon hoparlörü" ya da "Ses kapalı".
+- Ses açma/kapama ve rota değişimleri çalışma log'una (`live.jsonl`: `Start`, `Sound`, `Route`) yazılır; `Playback` yalnız ses gerçekten çaldıysa.
 - **Kapatınca** çalan meal hemen durur.
 - **Açınca** son meal hâlâ çalıyorsa ya da biteli 30 s'den az olduysa baştan çalar; değilse sonraki meal beklenir.
 - Ses kapalıyken karta dokunmak çalmaz; ses düğmesi kısa vurgulanır.
@@ -71,11 +74,10 @@ Yukarıdan aşağıya:
 
 1. **Üst çubuk:** "Tilavet Meal"; sağda Geçmiş (saat), Yeni akış (+), Ses (hoparlör / üstü çizili hoparlör), yazı boyutu (A− / A+).
    - **Yazı boyutu:** A− ve A+ meal kartlarının yazısını küçültür/büyütür; Dinamik Yazı'nın üstüne çarpan olarak uygulanır (0.8×–2.0×, adım 0.15). Seçim `UserDefaults`'ta saklanır. Yaşlı kullanıcılar için.
-2. **Durum satırı:** Dinliyor · Takip kaybedildi · Durduruldu · Yükleniyor.
-3. **Akış:** Kartlar alt alta: başlık, meal metni, çok ayetli birimde "(… birbirine bağlı olduğu için birlikte çevrilmiştir.)" notu, saat (SS:dd). Çalan kart vurgulu. Yazı iOS Dinamik Yazı'ya uyar.
-   - Yeni kart gelince akış en alta kayar.
-   - Kullanıcı yukarıdaysa kaymaz; altta "Yeni meal ↓" düğmesi çıkar, dokununca en alta iner.
-   - Karta dokununca o meal baştan çalar (ses açıksa).
+2. **Durum satırı:** Yükleniyor · Ses bekleniyor (pencerede < 2 kelime) · Okuma duyuluyor · âyet aranıyor · Takip ediliyor · <Sure> Sûresi · Takip kaybedildi · âyet aranıyor · Durduruldu. Âyet 20 s'den uzun aranırsa altta turuncu not: "Kısa ve sık geçen ifadelerde âyet hemen bulunamayabilir; okumaya devam edin." (Fatiha gibi kalıp ifadeler birden çok surede geçer; motor yanlış meal vermektense susar.)
+3. **Akış:** Kartlar alt alta: başlık, meal metni, çok ayetli birimde "(… birbirine bağlı olduğu için birlikte çevrilmiştir.)" notu, saat (SS:dd). Son meal ya da dokunulan meal vurgulu. Yazı iOS Dinamik Yazı'ya uyar.
+   - Yeni kart gelince akış her zaman en alta kayar (İsmail: kullanıcı kaydırmak zorunda kalmasın).
+   - Karta dokununca o meal baştan çalar (ses açıksa) ve vurgu o karta geçer; yeni meal gelince vurgu son karta döner.
    - Boş akışta: "Başlat'a basın; duyulan âyetlerin meali burada listelenir."
 4. **Ekran açık kalsın:** Güneş simgesi + "Ekran açık kalsın" yazılı anahtar. Yalnız dinlerken etkili (`isIdleTimerDisabled`); Durdur'da normal kilitlenme. Seçim `UserDefaults`'ta saklanır; varsayılan kapalı (ekran pili dinlemeden çok harcar).
 5. **Başlat / Durdur:** Ekran genişliğinde, ~64 pt. Başlat yeşil, Durdur kırmızı.

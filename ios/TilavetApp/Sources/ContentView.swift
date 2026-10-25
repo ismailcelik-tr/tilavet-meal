@@ -19,9 +19,21 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
-                Text(modeStatus ?? pipeline.status)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                VStack(spacing: 4) {
+                    Text(modeStatus ?? pipeline.status)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    if let hint = pipeline.hint {
+                        Text(hint)
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                            .multilineTextAlignment(.center)
+                    }
+                    Label(outputText, systemImage: pipeline.soundOn ? "speaker.wave.2" : "speaker.slash")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal)
 
                 FeedView(feed: store.active, scale: textScale, onTap: play)
 
@@ -114,6 +126,14 @@ struct ContentView: View {
         .accessibilityLabel("Yazıyı büyüt")
     }
 
+    /// Where meals go right now.
+    private var outputText: String {
+        guard pipeline.soundOn else {
+            return "Ses kapalı"
+        }
+        return pipeline.headphoneName.map { "Kulaklık: \($0)" } ?? "Telefon hoparlörü"
+    }
+
     private func toggleRunning() {
         if pipeline.running {
             pipeline.stop()
@@ -138,15 +158,16 @@ struct ContentView: View {
                        durationS: Double(LaunchArgs.value("--duration") ?? ""), onMeal: nil)
     }
 
-    private func play(_ unit: MealUnit) {
+    private func play(_ unit: MealUnit) -> Bool {
         if pipeline.replay(unit) {
-            return
+            return true
         }
         soundHint = true
         Task {
             try? await Task.sleep(for: .seconds(Self.hintS))
             soundHint = false
         }
+        return false
     }
 
     private func applyIdleTimer() {

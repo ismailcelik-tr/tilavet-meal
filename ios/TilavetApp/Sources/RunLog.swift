@@ -49,6 +49,11 @@ final class RunLog {
         write(live, ["type": "Playback", "unit": [unit.sura, unit.first], "wall_s": wall - start])
     }
 
+    /// App state worth seeing next to the windows: sound on/off, route changes.
+    func note(_ type: String, _ fields: [String: Any], at wall: Double) {
+        write(live, fields.merging(["type": type, "wall_s": wall - start]) { current, _ in current })
+    }
+
     func metric(_ values: [String: Any]) {
         write(metrics, values)
     }

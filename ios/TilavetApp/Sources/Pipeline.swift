@@ -7,9 +7,13 @@ import UIKit
 @MainActor
 final class Pipeline: ObservableObject {
     @Published private(set) var status = "Hazır"
+    /// Shown under the status while the engine searches for a long time.
+    @Published private(set) var hint: String?
     @Published private(set) var running = false
     /// Meals play only when on: headphones if connected, else the loudspeaker. Off by default without headphones.
     @Published private(set) var soundOn = AudioRoute.headphonesConnected()
+    /// Where meals go when the sound is on: the headphone name, or nil for the loudspeaker.
+    @Published private(set) var headphoneName = AudioRoute.headphoneName()
 
     private static let hopS = 1.0
     private static let windowS = 12.0
@@ -17,6 +21,11 @@ final class Pipeline: ObservableObject {
     private static let maxWaitS = 15.0
     private static let metricsS = 5.0
     private static let replayWithinS = 30.0
+    private static let hintAfterS = 20.0
+    private static let searchHint = "Kısa ve sık geçen ifadelerde âyet hemen bulunamayabilir; okumaya devam edin."
+
+    private var trackedSura: Int?
+    private var searchingSince: Date?
 
     private let worker = Worker()
     private var onMeal: ((MealUnit) -> Void)?
@@ -24,8 +33,8 @@ final class Pipeline: ObservableObject {
 
     init() {
         worker.setSound(soundOn, replayWithinS: nil)
-        routeObserver = AudioRoute.observeRemoval { [weak self] in
-            self?.setSound(false)
+        routeObserver = AudioRoute.observe { [weak self] change in
+            self?.routeChanged(change)
         }
     }
 
@@ -36,6 +45,9 @@ final class Pipeline: ObservableObject {
         }
         running = true
         status = "Yükleniyor"
+        trackedSura = nil
+        searchingSince = nil
+        hint = nil
         UIDevice.current.isBatteryMonitoringEnabled = true
         self.onMeal = onMeal
 
@@ -58,6 +70,7 @@ final class Pipeline: ObservableObject {
         }
         running = false
         status = "Durduruldu"
+        hint = nil
         worker.stop()
     }
 
@@ -65,6 +78,7 @@ final class Pipeline: ObservableObject {
     func setSound(_ on: Bool) {
         soundOn = on
         worker.setSound(on, replayWithinS: Pipeline.replayWithinS)
+        worker.note("Sound", ["on": on, "outputs": AudioRoute.outputs()])
     }
 
     /// Plays a meal from the feed; false when the sound is off.
@@ -76,28 +90,71 @@ final class Pipeline: ObservableObject {
         return true
     }
 
+    /// Headphones arriving turn the sound on; leaving turns it off (no surprise loudspeaker).
+    private func routeChanged(_ change: AudioRoute.Change) {
+        headphoneName = AudioRoute.headphoneName()
+        switch change {
+        case .headphonesAdded:
+            setSound(true)
+        case .headphonesRemoved:
+            setSound(false)
+        case let .other(reason):
+            worker.note("Route", ["reason": reason, "outputs": AudioRoute.outputs()])
+        }
+    }
+
     private func apply(_ update: Worker.Update) {
         switch update {
         case .listening:
-            status = "Dinliyor"
+            status = "Ses bekleniyor"
+        case let .heard(speech):
+            showSearch(speech: speech)
+        case let .confirmed(sura):
+            trackedSura = sura
+            searchingSince = nil
+            hint = nil
+            status = "Takip ediliyor · \(suraNames[sura - 1]) Sûresi"
         case .lost:
-            status = "Takip kaybedildi"
+            trackedSura = nil
+            status = "Takip kaybedildi · âyet aranıyor"
         case let .meal(unit):
             onMeal?(unit)
-            status = "Dinliyor"
         case let .failed(message):
             status = "Hata: \(message)"
             running = false
         }
     }
 
+    /// Without a tracked position: tell apart silence from speech the engine cannot place yet.
+    private func showSearch(speech: Bool) {
+        guard trackedSura == nil else {
+            return
+        }
+        guard speech else {
+            status = "Ses bekleniyor"
+            searchingSince = nil
+            hint = nil
+            return
+        }
+
+        status = "Okuma duyuluyor · âyet aranıyor"
+        let since = searchingSince ?? Date()
+        searchingSince = since
+        hint = Date().timeIntervalSince(since) >= Pipeline.hintAfterS ? Pipeline.searchHint : nil
+    }
+
     /// Off the main actor: audio callbacks, ASR and file writes.
     private final class Worker: @unchecked Sendable {
         enum Update {
             case listening, lost
+            /// Per window: did it contain speech (at least `speechWords` words)?
+            case heard(Bool)
+            case confirmed(Int)
             case meal(MealUnit)
             case failed(String)
         }
+
+        private static let speechWords = 2
 
         private let queue = DispatchQueue(label: "pipeline", qos: .userInitiated)
         private let lock = NSLock()
@@ -124,6 +181,8 @@ final class Pipeline: ObservableObject {
                     self.input = input
                     self.sessionActive = true
                     self.startMetrics()
+                    self.log?.note("Start", ["sound": self.soundOn, "outputs": AudioRoute.outputs()],
+                                   at: CACurrentMediaTime())
                     notify(.listening)
                 } catch {
                     notify(.failed("\(error)"))
@@ -143,6 +202,14 @@ final class Pipeline: ObservableObject {
                 } else {
                     self.output.stop()
                 }
+            }
+        }
+
+        func note(_ type: String, _ fields: [String: Any]) {
+            let wall = CACurrentMediaTime()
+            nonisolated(unsafe) let fields = fields
+            queue.async {
+                self.log?.note(type, fields, at: wall)
             }
         }
 
@@ -221,11 +288,15 @@ final class Pipeline: ObservableObject {
             for record in session.feed(samples, arrivedAt: last.1) {
                 log.record(record, computeS: recognizer?.lastSeconds)
                 switch record {
+                case let .window(window):
+                    notify(.heard(window.text.split(separator: " ").count >= Worker.speechWords))
+                case let .event(.confirmed(_, ref, _, _)):
+                    notify(.confirmed(ref.sura))
                 case let .player(.started(_, play)):
                     if soundOn {
                         output.play(play.unit)
+                        log.playback(play.unit, at: CACurrentMediaTime())
                     }
-                    log.playback(play.unit, at: CACurrentMediaTime())
                     notify(.meal(play.unit))
                 case .event(.lost):
                     notify(.lost)

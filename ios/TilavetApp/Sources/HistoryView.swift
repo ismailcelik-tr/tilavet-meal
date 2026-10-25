@@ -5,7 +5,7 @@ import TilavetCore
 struct HistoryView: View {
     @ObservedObject var store: FeedStore
     let scale: Double
-    let onTap: (MealUnit) -> Void
+    let onTap: (MealUnit) -> Bool
 
     @Environment(\.dismiss) private var dismiss
 

@@ -20,17 +20,40 @@ enum AudioRoute {
         AVAudioSession.sharedInstance().currentRoute.outputs.contains { headphonePorts.contains($0.portType) }
     }
 
-    /// Calls `action` when headphones go away (unplugged, Bluetooth lost).
-    static func observeRemoval(_ action: @escaping @MainActor () -> Void) -> NSObjectProtocol {
+    /// Name of the connected headphones, nil when meals would go to the loudspeaker.
+    static func headphoneName() -> String? {
+        AVAudioSession.sharedInstance().currentRoute.outputs.first { headphonePorts.contains($0.portType) }?.portName
+    }
+
+    /// Outputs of the current route, for the run log.
+    static func outputs() -> [String] {
+        AVAudioSession.sharedInstance().currentRoute.outputs.map { "\($0.portType.rawValue):\($0.portName)" }
+    }
+
+    /// Calls `action` with the change reason on every route change; `headphonesAdded` / `headphonesRemoved` mark
+    /// a headphone arriving or leaving.
+    static func observe(_ action: @escaping @MainActor (Change) -> Void) -> NSObjectProtocol {
         NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil,
                                                queue: .main) { note in
-            guard let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
-                  AVAudioSession.RouteChangeReason(rawValue: raw) == .oldDeviceUnavailable else {
-                return
+            let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
+            let reason = AVAudioSession.RouteChangeReason(rawValue: raw) ?? .unknown
+            let change: Change
+            switch reason {
+            case .newDeviceAvailable where headphonesConnected():
+                change = .headphonesAdded
+            case .oldDeviceUnavailable:
+                change = .headphonesRemoved
+            default:
+                change = .other(raw)
             }
             MainActor.assumeIsolated {
-                action()
+                action(change)
             }
         }
+    }
+
+    enum Change {
+        case headphonesAdded, headphonesRemoved
+        case other(UInt)
     }
 }

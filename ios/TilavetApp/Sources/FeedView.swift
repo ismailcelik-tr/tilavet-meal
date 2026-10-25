@@ -1,61 +1,39 @@
 import SwiftUI
 import TilavetCore
 
-/// Meal cards in order. Follows new meals while the reader is at the bottom; otherwise offers "Yeni meal ↓".
+/// Meal cards in order; every new meal scrolls into view. The highlighted card is the latest meal, or the one
+/// the reader tapped to replay until the next meal arrives.
 struct FeedView: View {
     let feed: Feed
     let scale: Double
-    let onTap: (MealUnit) -> Void
+    /// Replays a meal; false when it could not (sound off).
+    let onTap: (MealUnit) -> Bool
 
-    @State private var atBottom = true
-    @State private var unseen = false
-
-    private static let bottomSlack = 40.0
+    @State private var selected: Int?
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(Array(feed.entries.enumerated()), id: \.offset) { index, entry in
-                        MealCard(entry: entry, scale: scale, latest: index == feed.entries.count - 1)
+                        MealCard(entry: entry, scale: scale,
+                                 highlighted: index == (selected ?? feed.entries.count - 1))
                             .id(index)
                             .onTapGesture {
-                                if let unit = MealLibrary.shared.unit(entry) {
-                                    onTap(unit)
+                                if let unit = MealLibrary.shared.unit(entry), onTap(unit) {
+                                    selected = index
                                 }
                             }
                     }
                 }
                 .padding(.horizontal)
             }
-            .onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.contentOffset.y + geometry.containerSize.height
-                    >= geometry.contentSize.height - Self.bottomSlack
-            } action: { _, isAtBottom in
-                atBottom = isAtBottom
-                if isAtBottom {
-                    unseen = false
-                }
-            }
             .onChange(of: feed.entries.count) {
-                guard atBottom else {
-                    unseen = true
-                    return
-                }
+                selected = nil
                 scrollToEnd(proxy, animated: true)
             }
             .onAppear {
                 scrollToEnd(proxy, animated: false)
-            }
-            .overlay(alignment: .bottom) {
-                if unseen {
-                    Button("Yeni meal ↓") {
-                        scrollToEnd(proxy, animated: true)
-                        unseen = false
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .padding(.bottom, 8)
-                }
             }
             .overlay {
                 if feed.entries.isEmpty {
@@ -78,11 +56,11 @@ struct FeedView: View {
     }
 }
 
-/// Title, meal text, the joint-translation note and the time; the latest card is highlighted.
+/// Title, meal text, the joint-translation note and the time.
 struct MealCard: View {
     let entry: FeedEntry
     let scale: Double
-    let latest: Bool
+    let highlighted: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -105,7 +83,7 @@ struct MealCard: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 12)
-            .fill(latest ? Color.accentColor.opacity(0.12) : Color(.secondarySystemBackground)))
+            .fill(highlighted ? Color.accentColor.opacity(0.12) : Color(.secondarySystemBackground)))
         .contentShape(Rectangle())
     }
 
