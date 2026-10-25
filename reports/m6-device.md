@@ -56,3 +56,31 @@ Ham veri: `data/derived/m6/loopback/` (`summary.json`, `live.jsonl`, `metrics.js
 **Sonuç:** Kilitli ekranda dinleme ve kulaklıktan meal çalma kesintisiz sürüyor; kaynak kullanımı kilit açık koşuyla aynı. App kilit durumunu log'a yazmıyor; kilit İsmail'in gözlemine dayanıyor.
 
 Ham veri: `data/derived/m6/lock/` (`live.jsonl`, `metrics.jsonl`).
+
+## Kulaklık gecikmesi
+
+Telefonda ölçülmedi; İsmail'in kararıyla atlandı (birkaç yüz ms gecikme kullanımda sorun değil). Mac'teki ölçüm (M4): CMF Buds 2a ek gecikmesi ~314 ms. Loopback gecikmesi buna ~0.4 s eklense de kapıların çok altında.
+
+## Meal paketi seçenekleri
+
+`scripts/package_options.py` (boyutlar bütün setin dönüştürülmesiyle) ve app'in `--tts-sample` modu (cihaz TTS). Örnekler: `data/derived/m6/package/samples/` (1:2, 112:1, 12:11–12, 2:255, 2:282).
+
+| Seçenek | 5.393 birim | Not |
+|---|---|---|
+| Şu anki set (`say`, AAC-LC ~32 kbps) | 398 MB | `say` her dosyanın başına 32 KB dolgu koyuyor |
+| AAC-LC 32 kbps (`afconvert`) | 287 MB | Aynı kodek ve bit hızı, dolgu 4 KB |
+| HE-AAC 24 kbps | 195 MB | |
+| HE-AAC 16 kbps | 142 MB | |
+| Cihaz TTS (`AVSpeechSynthesizer`) | 0 MB | Ses önceden doğrulanamaz |
+
+Diğer kurulum içeriği: model 18 MB, Kur'an ve meal metni ~2 MB, sherpa-onnx framework. Bugünkü app 487 MB; bunun 50 MB'ı yalnız test için olan parity klipleri.
+
+**Cihaz TTS:**
+
+- Telefondaki tek Türkçe ses `com.apple.voice.super-compact.tr-TR.Yelda` (kalite 1, varsayılan). Daha yüksek kaliteli Yelda indirilmemiş.
+- Beş birimin ses süresi Mac'te `say` ile üretilenlerle birebir aynı (ör. 2:282 77.68 s). Aynı ses ve motor.
+- İlk sese kadar süre: ilk birimde 0.66 s (synthesizer açılışı), sonrakilerde 8–18 ms. 77.7 s'lik 2:282'nin tamamı 0.72 s'de üretildi.
+- Synthesizer uzun metinde cümle aralarında boş buffer gönderiyor (2:282'de 5). İlk denemede boş buffer bitiş sayıldı ve uzun birimler kesildi; bitiş `didFinish` delegate'ine bağlanınca düzeldi.
+- Risk: iOS güncellemesi sesi ya da okunuşu değiştirebilir; çalınacak ses önceden dinlenip doğrulanamaz.
+
+**Karar:** İsmail örnekleri dinleyecek.
