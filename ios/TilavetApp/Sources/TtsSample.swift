@@ -14,12 +14,14 @@ enum TtsSample {
         case noVoice
     }
 
-    static func run() async throws {
+    /// `voiceName` picks the best installed quality of that voice (e.g. "Cem"); nil is the language default.
+    static func run(voiceName: String?) async throws {
         try? FileManager.default.removeItem(at: Assets.documents.appendingPathComponent(resultName))
         let units = mealUnits(try parseTanzil(String(contentsOf: Assets.meal, encoding: .utf8)))
-        guard let voice = AVSpeechSynthesisVoice(language: language) else {
+        guard let voice = pick(voiceName) else {
             throw Failure.noVoice
         }
+        let prefix = voiceName.map { "tts-\($0.lowercased())" } ?? "tts"
 
         let synthesizer = AVSpeechSynthesizer()
         var results: [[String: Any]] = []
@@ -28,7 +30,7 @@ enum TtsSample {
                 continue
             }
 
-            let name = "tts-\(sura)-\(first).caf"
+            let name = "\(prefix)-\(sura)-\(first).caf"
             let utterance = AVSpeechUtterance(string: unit.text)
             utterance.voice = voice
             let writer = Writer(Assets.documents.appendingPathComponent(name))
@@ -41,6 +43,15 @@ enum TtsSample {
             .map { ["name": $0.name, "identifier": $0.identifier, "quality": $0.quality.rawValue] }
         let result: [String: Any] = ["voice": voice.identifier, "voices": voices, "units": results]
         try Assets.publish(JSONSerialization.data(withJSONObject: result), as: resultName)
+    }
+
+    private static func pick(_ name: String?) -> AVSpeechSynthesisVoice? {
+        guard let name else {
+            return AVSpeechSynthesisVoice(language: language)
+        }
+        return AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language == language && $0.name.hasPrefix(name) }
+            .max { $0.quality.rawValue < $1.quality.rawValue }
     }
 
     /// Writes one utterance to a file. The synthesizer also sends empty buffers mid-utterance, so the end is

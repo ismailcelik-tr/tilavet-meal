@@ -69,7 +69,7 @@ struct ContentView: View {
     private func runTts() async {
         parityStatus = "TTS örnekleri yazılıyor"
         do {
-            try await TtsSample.run()
+            try await TtsSample.run(voiceName: LaunchArgs.value("--voice"))
             parityStatus = "TTS örnekleri bitti"
         } catch {
             parityStatus = "Hata: \(error)"
