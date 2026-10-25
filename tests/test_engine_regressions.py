@@ -43,3 +43,13 @@ def test_going_back_is_not_progress(index):
     ]
 
     assert AyahRef(22, 57) not in feed(engine, *texts)
+
+
+def test_short_first_ayah_is_backfilled(index):
+    # Field test: Al-Asr 103:1 is one word; the passage is only placed once 103:3 begins.
+    words = normalize("بسم الله الرحمن الرحيم والعصر إن الإنسان لفي خسر إلا الذين آمنوا").split()
+    engine = PositionEngine(index)
+    refs = [e.ref for n in range(1, len(words) + 1) for e in engine.feed(float(n), words[:n])
+            if isinstance(e, AyahConfirmed)]
+
+    assert refs[:3] == [AyahRef(103, 1), AyahRef(103, 2), AyahRef(103, 3)]

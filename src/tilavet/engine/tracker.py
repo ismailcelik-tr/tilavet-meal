@@ -57,6 +57,9 @@ class EngineConfig:
     acquire_min_votes: int = 3
     acquire_max_candidates: int = 8
     acquire_rival_votes: int = 2  # the winner's own rare words lining up elsewhere: a look-alike passage
+    acquire_backfill: int = 2  # earlier heard ayahs of the winning match also confirmed; a short opening ayah (103:1)
+    acquire_backfill_age_s: float = 7.0  # older ones are skipped: a meal > 10 s after its ayah misleads
+    window_s: float = 12.0  # ASR window, to estimate how long ago a word was heard
     diagonal_tolerance: int = 8  # words; ASR insertions/deletions shift the diagonal
     common_word_limit: int = 500  # words with more occurrences don't vote
     track_back: int = 30
@@ -125,9 +128,26 @@ class PositionEngine:
         self._pointer = best.corpus_end
         self._misses = 0
         current = self._index.ordinal_at(best.positions[-1])
+        ordinals = [*self._backfill(len(words), best, current), current]
         self._last_confirmed = current
-        self._confirmed = {current}
-        return [AyahConfirmed(t, self._index.ref(current), Mode.ACQUIRE, best.score)]
+        self._confirmed = set(ordinals)
+        return [AyahConfirmed(t, self._index.ref(o), Mode.ACQUIRE, best.score) for o in ordinals]
+
+    def _backfill(self, hyp_len: int, best: Alignment, current: int) -> list[int]:
+        """Earlier ayahs of the match with a heard word, recent enough for their meal to still make sense.
+
+        Age is estimated from the words after an ayah's last matched word, assuming words spread evenly over the
+        window; a window not yet full overestimates it, which only skips more."""
+        config = self._config
+        if config.acquire_backfill == 0:
+            return []
+
+        last_heard: dict[int, int] = {}
+        for h, position in best.pairs:
+            last_heard[self._index.ordinal_at(position)] = h
+        earlier = sorted(o for o in last_heard if o < current)[-config.acquire_backfill:]
+        seconds_per_word = config.window_s / hyp_len
+        return [o for o in earlier if (hyp_len - 1 - last_heard[o]) * seconds_per_word <= config.acquire_backfill_age_s]
 
     def _candidate_alignments(self, words: Sequence[str], voters: Iterable[tuple[int, str]], min_votes: int,
                               limit: int | None) -> list[Alignment]:

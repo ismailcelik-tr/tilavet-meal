@@ -1,4 +1,5 @@
 import hashlib
+from dataclasses import replace
 
 import pytest
 
@@ -69,8 +70,37 @@ def confirmed(events) -> list[AyahRef]:
 def test_acquire_commits_on_unique_passage(engine):
     events = engine.feed(1.0, words((1, 1), (1, 2)))
 
-    assert confirmed(events) == [AyahRef(1, 2)]
+    assert confirmed(events) == [AyahRef(1, 1), AyahRef(1, 2)]
     assert engine.mode is Mode.TRACK
+
+
+def test_acquire_backfill_is_capped():
+    engine = PositionEngine(QuranIndex.build(ALL), replace(CONFIG, acquire_backfill=1))
+
+    assert confirmed(engine.feed(1.0, words((1, 1), (1, 2), (1, 3)))) == [AyahRef(1, 2), AyahRef(1, 3)]
+
+
+def test_acquire_without_backfill_confirms_last_ayah_only():
+    engine = PositionEngine(QuranIndex.build(ALL), replace(CONFIG, acquire_backfill=0))
+
+    assert confirmed(engine.feed(1.0, words((1, 1), (1, 2)))) == [AyahRef(1, 2)]
+
+
+def test_backfill_skips_an_ayah_that_was_not_heard(engine):
+    # The match bridges the skipped one-word ayah 2:4 (muhammad-ayyoub-8 skipped 74:5 this way).
+    assert confirmed(engine.feed(1.0, words((2, 3), (2, 5)))) == [AyahRef(2, 3), AyahRef(2, 5)]
+
+
+def test_backfill_skips_an_ayah_that_ended_too_long_ago():
+    engine = PositionEngine(QuranIndex.build(ALL), replace(CONFIG, acquire_backfill_age_s=1.0))
+
+    assert confirmed(engine.feed(1.0, words((1, 1), (1, 2)))) == [AyahRef(1, 2)]
+
+
+def test_backfilled_ayahs_are_not_reconfirmed(engine):
+    engine.feed(1.0, words((1, 1), (1, 2)))
+
+    assert confirmed(engine.feed(2.0, words((1, 1), (1, 2), (1, 3)))) == [AyahRef(1, 3)]
 
 
 def test_acquire_waits_while_passage_is_ambiguous(engine):
@@ -79,7 +109,7 @@ def test_acquire_waits_while_passage_is_ambiguous(engine):
 
     events = engine.feed(2.0, words((1, 3), (1, 4)))
 
-    assert confirmed(events) == [AyahRef(1, 4)]
+    assert confirmed(events) == [AyahRef(1, 3), AyahRef(1, 4)]
 
 
 def test_track_confirms_next_ayah_after_two_words(engine):
@@ -117,7 +147,7 @@ def test_lost_then_reacquire(engine):
 
     assert [type(e) for e in events] == [Lost]
     assert engine.mode is Mode.ACQUIRE
-    assert confirmed(engine.feed(10.0, words((2, 3), (2, 4), (2, 5)))) == [AyahRef(2, 5)]
+    assert confirmed(engine.feed(10.0, words((2, 3), (2, 4), (2, 5)))) == [AyahRef(2, 3), AyahRef(2, 4), AyahRef(2, 5)]
 
 
 def test_short_noise_is_not_a_miss(engine):
