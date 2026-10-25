@@ -9,13 +9,7 @@ final class AudioInput {
     private static let tapFrames: AVAudioFrameCount = 4_800
 
     func start(onChunk: @escaping ([Float], Double) -> Void) throws {
-        let session = AVAudioSession.sharedInstance()
-        // .allowBluetoothA2DP, never .allowBluetooth: HFP would pull the headphone to the low-quality call profile.
-        try session.setCategory(.playAndRecord, mode: .measurement, options: [.allowBluetoothA2DP])
-        try session.setActive(true)
-        if let builtIn = session.availableInputs?.first(where: { $0.portType == .builtInMic }) {
-            try session.setPreferredInput(builtIn)
-        }
+        try AudioRoute.activate()
 
         let input = engine.inputNode
         let source = input.outputFormat(forBus: 0)

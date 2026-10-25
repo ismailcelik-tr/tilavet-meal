@@ -7,26 +7,39 @@ import UIKit
 @MainActor
 final class Pipeline: ObservableObject {
     @Published private(set) var status = "Hazır"
-    @Published private(set) var meal: MealUnit?
     @Published private(set) var running = false
+    /// Meals play only when on: headphones if connected, else the loudspeaker. Off by default without headphones.
+    @Published private(set) var soundOn = AudioRoute.headphonesConnected()
 
     private static let hopS = 1.0
     private static let windowS = 12.0
     private static let cooldownS = 300.0
     private static let maxWaitS = 15.0
     private static let metricsS = 5.0
+    private static let replayWithinS = 30.0
 
     private let worker = Worker()
+    private var onMeal: ((MealUnit) -> Void)?
+    private var routeObserver: NSObjectProtocol?
 
-    func start(threads: Int, mute: Bool, durationS: Double?) {
+    init() {
+        worker.setSound(soundOn, replayWithinS: nil)
+        routeObserver = AudioRoute.observeRemoval { [weak self] in
+            self?.setSound(false)
+        }
+    }
+
+    /// `onMeal` receives every meal that starts, whether or not it is heard.
+    func start(threads: Int, durationS: Double?, onMeal: ((MealUnit) -> Void)?) {
         guard !running else {
             return
         }
         running = true
         status = "Yükleniyor"
         UIDevice.current.isBatteryMonitoringEnabled = true
+        self.onMeal = onMeal
 
-        worker.start(threads: threads, mute: mute) { [weak self] update in
+        worker.start(threads: threads) { [weak self] update in
             Task { @MainActor in
                 self?.apply(update)
             }
@@ -48,6 +61,21 @@ final class Pipeline: ObservableObject {
         worker.stop()
     }
 
+    /// Off stops the playing meal; on restarts the last one if it played within the last 30 s.
+    func setSound(_ on: Bool) {
+        soundOn = on
+        worker.setSound(on, replayWithinS: Pipeline.replayWithinS)
+    }
+
+    /// Plays a meal from the feed; false when the sound is off.
+    func replay(_ unit: MealUnit) -> Bool {
+        guard soundOn else {
+            return false
+        }
+        worker.replay(unit)
+        return true
+    }
+
     private func apply(_ update: Worker.Update) {
         switch update {
         case .listening:
@@ -55,7 +83,7 @@ final class Pipeline: ObservableObject {
         case .lost:
             status = "Takip kaybedildi"
         case let .meal(unit):
-            meal = unit
+            onMeal?(unit)
             status = "Dinliyor"
         case let .failed(message):
             status = "Hata: \(message)"
@@ -80,11 +108,11 @@ final class Pipeline: ObservableObject {
         private var log: RunLog?
         private var metrics: DispatchSourceTimer?
         private let output = MealOutput()
-        private var mute = false
+        private var soundOn = false
+        private var sessionActive = false
         private var notify: (Update) -> Void = { _ in }
 
-        func start(threads: Int, mute: Bool, notify: @escaping (Update) -> Void) {
-            self.mute = mute
+        func start(threads: Int, notify: @escaping (Update) -> Void) {
             self.notify = notify
             queue.async {
                 do {
@@ -94,11 +122,37 @@ final class Pipeline: ObservableObject {
                         self?.enqueue(samples, capturedAt)
                     }
                     self.input = input
+                    self.sessionActive = true
                     self.startMetrics()
                     notify(.listening)
                 } catch {
                     notify(.failed("\(error)"))
                 }
+            }
+        }
+
+        /// `replayWithinS` nil: only set the flag (launch).
+        func setSound(_ on: Bool, replayWithinS: Double?) {
+            queue.async {
+                self.soundOn = on
+                guard let replayWithinS else {
+                    return
+                }
+                if on {
+                    self.output.replayRecent(withinS: replayWithinS)
+                } else {
+                    self.output.stop()
+                }
+            }
+        }
+
+        func replay(_ unit: MealUnit) {
+            queue.async {
+                if !self.sessionActive {
+                    try? AudioRoute.activate()
+                    self.sessionActive = true
+                }
+                self.output.play(unit)
             }
         }
 
@@ -168,7 +222,7 @@ final class Pipeline: ObservableObject {
                 log.record(record, computeS: recognizer?.lastSeconds)
                 switch record {
                 case let .player(.started(_, play)):
-                    if !mute {
+                    if soundOn {
                         output.play(play.unit)
                     }
                     log.playback(play.unit, at: CACurrentMediaTime())
