@@ -21,7 +21,7 @@ final class Pipeline: ObservableObject {
     private static let maxWaitS = 15.0
     private static let metricsS = 5.0
     private static let replayWithinS = 30.0
-    private static let hintAfterS = 20.0
+    private static let hintAfterS = 10.0
     private static let searchHint = "Kısa ve sık geçen ifadelerde âyet hemen bulunamayabilir; okumaya devam edin."
 
     private var trackedSura: Int?

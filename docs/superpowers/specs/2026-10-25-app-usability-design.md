@@ -74,7 +74,7 @@ Yukarıdan aşağıya:
 
 1. **Üst çubuk:** "Tilavet Meal"; sağda Geçmiş (saat), Yeni akış (+), Ses (hoparlör / üstü çizili hoparlör), yazı boyutu (A− / A+).
    - **Yazı boyutu:** A− ve A+ meal kartlarının yazısını küçültür/büyütür; Dinamik Yazı'nın üstüne çarpan olarak uygulanır (0.8×–2.0×, adım 0.15). Seçim `UserDefaults`'ta saklanır. Yaşlı kullanıcılar için.
-2. **Durum satırı:** Yükleniyor · Ses bekleniyor (pencerede < 2 kelime) · Okuma duyuluyor · âyet aranıyor · Takip ediliyor · <Sure> Sûresi · Takip kaybedildi · âyet aranıyor · Durduruldu. Âyet 20 s'den uzun aranırsa altta turuncu not: "Kısa ve sık geçen ifadelerde âyet hemen bulunamayabilir; okumaya devam edin." (Fatiha gibi kalıp ifadeler birden çok surede geçer; motor yanlış meal vermektense susar.)
+2. **Durum satırı:** Yükleniyor · Ses bekleniyor (pencerede < 2 kelime) · Okuma duyuluyor · âyet aranıyor · Takip ediliyor · <Sure> Sûresi · Takip kaybedildi · âyet aranıyor · Durduruldu. Âyet 10 s'den uzun aranırsa (iPhone loopback'te meal − âyet başı p90 7.7 s) altta turuncu not: "Kısa ve sık geçen ifadelerde âyet hemen bulunamayabilir; okumaya devam edin." (Fatiha gibi kalıp ifadeler birden çok surede geçer; motor yanlış meal vermektense susar.)
 3. **Akış:** Kartlar alt alta: başlık, meal metni, çok ayetli birimde "(… birbirine bağlı olduğu için birlikte çevrilmiştir.)" notu, saat (SS:dd). Son meal ya da dokunulan meal vurgulu. Yazı iOS Dinamik Yazı'ya uyar.
    - Yeni kart gelince akış her zaman en alta kayar (İsmail: kullanıcı kaydırmak zorunda kalmasın).
    - Karta dokununca o meal baştan çalar (ses açıksa) ve vurgu o karta geçer; yeni meal gelince vurgu son karta döner.
