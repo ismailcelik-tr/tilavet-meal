@@ -52,6 +52,15 @@ uv run --group onnx python scripts/asr_windows.py --set blind2 --model quran-asr
 uv run python scripts/replay_m3.py --tune past_margin=3   # opened sets only
 uv run python scripts/replay_m3.py --set blind2          # -> reports/m5-blind.md
 uv run python scripts/sample_process.py <pid>
+
+# M6: golden vectors, iOS app on a paired iPhone, device runs
+uv run python scripts/export_golden.py
+cd ios/TilavetCore && swift test && cd -
+uv run --group piper python scripts/render_meals_piper.py   # Piper Eren, HE-AAC 16 kbps, ~20 min
+sh scripts/ios_resources.sh
+uv run python scripts/device.py build
+uv run --group audio python scripts/device_loopback.py --volume 50
+uv run python scripts/package_options.py
 ```
 
 ## Data sources

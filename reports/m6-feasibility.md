@@ -14,7 +14,7 @@ Tarih: 2026-10-25 · Spec: [m6-ios-spike-design](../docs/superpowers/specs/2026-
 | Kilitli ekran | dinleme ve meal sürüyor | 13 dk, 25/25 meal, kesinti yok; İsmail kulaklıktan duydu ✅ |
 | Pil | bilgi | Ölçülmedi (İsmail kararı) |
 | Kulaklık gecikmesi | bilgi | Telefonda ölçülmedi (İsmail kararı); Mac'te ~314 ms |
-| Meal paketi | karar | 398 MB → HE-AAC 16 kbps 142 MB, duyulur fark yok |
+| Meal paketi ve ses | karar | HE-AAC 16 kbps; ses Yelda yerine Piper Eren (erkek): 398 MB → 122 MB |
 
 **Sonuç:** tiny + motor iPhone 17'de gerçek zamanlı ve Mac'le aynı doğrulukta çalışıyor; kilitli ekranda sürüyor. Mobil fizibilite iPhone 17 için kanıtlandı. Eski cihazlar ve Android ölçülmedi.
 
@@ -62,7 +62,23 @@ Toplam = meal + model 18 MB + framework 25 MB + metin ~2 MB; test için olan par
 - ~190 MB ile sure bazında indirmeye gerek yok; ilk dinlemede internet istemez.
 - Cihaz TTS yedek olarak kalır: U7'de Yelda kayıtlarının app içinde dağıtılmasına lisans çıkmazsa ya da boyut kritik olursa. Gecikmesi sorun değil (ilk birim 0.66 s, sonra < 20 ms).
 
-Not: Şu anki 398 MB'ın büyük kısmı ses değil; `say` her dosyanın başına 32 KB dolgu koyuyor. Aynı kodek `afconvert` ile 287 MB.
+### Ses seçimi (İsmail)
+
+İsmail erkek ses istedi. Aynı 5 birim dört sesle dinlendi:
+
+| Ses | Kaynak | Perde | Lisans |
+|---|---|---|---|
+| Yelda | Apple, kadın (şu anki) | ~210 Hz | Apple sesiyle üretilen kaydın dağıtımı belirsiz |
+| Cem (Geliştirilmiş) | Apple, erkek; iPhone'da üretildi (`--tts-sample --voice Cem`) | – | Yelda ile aynı soru |
+| Piper dfki | Piper'ın resmî Türkçe sesi, erkek | ~105 Hz | CC BY-NC-SA 4.0 (ticari değil) |
+| **Piper Eren** | Topluluk modeli `99eren99/piper-turkish-tts`, erkek | ~93 Hz | **Belirtilmemiş** |
+
+**Karar (İsmail): Piper Eren.** Bütün set `scripts/render_meals_piper.py` ile Mac'te üretildi (20 dk, 8 çekirdek): 5.393 birim, 11.9 saat, HE-AAC 16 kbps 122 MB. Eren Yelda'dan ~%16 hızlı (2:282: 62.9 s / 77.7 s). App paketi 487 MB → 224 MB (parity klipleri dahil). İsmail telefonda kulaklıkla denedi: "gayet başarılı".
+
+- **Lisans riski:** Modelin lisansı yok; ürüne geçmeden model sahibinden yazılı izin gerekir (U7). İzin çıkmazsa yedekler: Apple Cem, bulut neural ses, kendi eğitilecek ses.
+- `piper-tts` 1.8.0'ın macOS paketi espeak verisini eksik getiriyor; 1.3.0'a sabitlendi. espeak-ng uzun veri yollarını (~160 karakter üstü) reddedip derleme yoluna düşüyor; proje `.venv`'inde yol kısa, sorun yok.
+
+Not: Yelda setinin 398 MB'ının büyük kısmı ses değil; `say` her dosyanın başına 32 KB dolgu koyuyor. Aynı kodek `afconvert` ile 287 MB.
 
 ## Taşıma stratejisi
 
@@ -94,6 +110,6 @@ Not: Şu anki 398 MB'ın büyük kısmı ses değil; `say` her dosyanın başın
 
 - **Saha denemesi (iPhone):** TV, bilgisayar hoparlörü ve canlı okuyucu; farklı mesafe ve odalar. Loopback'in ölçmediği tek önemli koşul bu. Ground truth yok; İsmail'in gözlemi + log.
 - **Pil:** ≥ 1 saat, kablosuz, kilitli; gerçek kullanım süresi için.
-- **Paket:** Seçilen biçimle (öneri HE-AAC 16 kbps) meal setini yeniden üret, app'e koy; parity kliplerini release paketinden çıkar.
-- **U7, lisans:** Diyanet meal metni ve Yelda seslendirmesinin app içinde dağıtılması. Ürüne geçmeden önce çözülmeli; paket kararını etkileyebilir.
+- **Paket:** Yapıldı (Piper Eren, HE-AAC 16 kbps). Parity klipleri yayın paketine geçerken çıkarılacak.
+- **U7, lisans:** Diyanet meal metni ve Piper Eren sesinin (`99eren99`) app içinde dağıtılması. Ürüne geçmeden önce çözülmeli; paket kararını etkileyebilir.
 - **M7 (Klasik Arapça)** planda ayrı bir scope kararı; kapalı derlem varsayımını bozuyor. Ürün yolu seçilirse ertelenebilir.

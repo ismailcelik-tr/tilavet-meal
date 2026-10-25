@@ -11,3 +11,4 @@ ios/TilavetApp/Data/
 ios/TilavetApp/*.xcodeproj/
 ios/TilavetApp/Generated/
 ios/TilavetApp/.build/
+.DS_Store
