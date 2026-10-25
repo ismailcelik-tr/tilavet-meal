@@ -13,7 +13,7 @@ Runtime translates nothing. It identifies the position in a closed corpus (6,236
 | M3 | Position engine, offline real-time simulation | Done: [report](reports/m3-feasibility.md) (Turkish), 0 wrong meals clean/10 dB; NVIDIA 1.3% at 0 dB |
 | M4 | Live mic + headphone playback, loopback, blind set | Done: [report](reports/m4-feasibility.md) (Turkish), 0 wrong meals live; blind hard ~1%, mujawwad weakest; tiny primary |
 | M5 | Robustness, new blind set, non-Quran speech, go/no-go | Done: [report](reports/m5-feasibility.md) (Turkish), 0 wrong of 837 blind meals; GO recommended |
-| M6 | iOS spike: Swift port, on-device ASR, measurements | In progress: core port verified, app runs on iPhone 17 |
+| M6 | iOS spike: Swift port, on-device ASR, measurements | Done: [report](reports/m6-feasibility.md) (Turkish), Swift core equals Python; iPhone 17: 0 wrong of 68 live meals, RTF 0.12, 157 MB, works locked |
 
 ## Run
 

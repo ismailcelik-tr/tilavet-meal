@@ -83,4 +83,4 @@ Diğer kurulum içeriği: model 18 MB, Kur'an ve meal metni ~2 MB, sherpa-onnx f
 - Synthesizer uzun metinde cümle aralarında boş buffer gönderiyor (2:282'de 5). İlk denemede boş buffer bitiş sayıldı ve uzun birimler kesildi; bitiş `didFinish` delegate'ine bağlanınca düzeldi.
 - Risk: iOS güncellemesi sesi ya da okunuşu değiştirebilir; çalınacak ses önceden dinlenip doğrulanamaz.
 
-**Karar:** İsmail örnekleri dinleyecek.
+**Dinleme (İsmail):** HE-AAC 16 kbps ile şu anki set arasında duyulur fark yok. Cihaz TTS sesi kabul edilebilir. Öneri [M6 raporunda](m6-feasibility.md#meal-paketi).
