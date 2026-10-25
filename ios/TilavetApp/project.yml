@@ -13,6 +13,7 @@ targets:
     sources:
       - Sources
       - Vendor/SherpaOnnx.swift
+      - Assets.xcassets
       - path: Data
         type: folder
     dependencies:
@@ -34,5 +35,6 @@ targets:
         DEVELOPMENT_TEAM: YE5W32UMGG
         CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "5.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_OBJC_BRIDGING_HEADER: Sources/Bridging.h
         TARGETED_DEVICE_FAMILY: "1"
