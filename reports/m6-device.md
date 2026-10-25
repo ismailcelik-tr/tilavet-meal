@@ -34,8 +34,25 @@ Bulgular:
 Sınırlar:
 
 - **CPU ölçümü güvenilir değil.** `thread_basic_info.cpu_usage` 5 s'de bir alınan anlık bir değer; medyan %4 çıktı. 2 thread ile 0.113 s/s ASR süresi ~%11–23 bir çekirdek yükü demek. Değer ASR anına denk gelmeyen örnekleri ölçüyor; CPU için ASR süresi esas alınmalı.
-- **Pil bu koşuda ölçülmedi.** Telefon kabloda şarj oldu (%70 → %80). Pil ölçümü Görev 9'da, kablosuz.
+- **Pil ölçülmedi.** Bu koşuda telefon kabloda şarj oldu (%70 → %80). Ayrı pil koşusu İsmail'in kararıyla atlandı; iOS pil seviyesini app'e %5 adımla veriyor, 30 dk'lık koşu zaten kaba bir tahmin verirdi.
 - **Loopback oda koşulunu ölçmüyor.** Hoparlör ile telefon yakın ve aynı masada (M4 sınırı).
 - **Tek cihaz.** iPhone 17 en yeni model; eski cihazlara genellenemez.
 
 Ham veri: `data/derived/m6/loopback/` (`summary.json`, `live.jsonl`, `metrics.jsonl`, `mic.f32`).
+
+## Kilitli ekran
+
+**Düzen:** Telefon kablosuz (`devicectl` Wi-Fi üzerinden; başlatma ve dosya çekme sorunsuz), CMF Buds bağlı ve İsmail'in kulağında. App Mac'ten `--autostart --threads 2` ile sesli başlatıldı. İsmail ekranı ~3. saniyede kilitledi. 20 s sonra MacBook hoparlöründen 3 akış çalındı (`abdulbaset-mujawwad-4`, `hani-rifai-3`, `sudais-0`; 12 dk). Oturum 13 dk.
+
+| Ölçüm | Sonuç |
+|---|---|
+| Meal (çalınan / beklenen birim) | 25 / 25, sıra birebir, yanlış 0 |
+| Pencere | 779; en büyük aralık 1.0 s; atlanan adım 0 |
+| `Playback` (`AVAudioPlayer` başladı) | 25; meal kararından ~0.7 s sonra |
+| ASR süresi / pencere p50 / en çok | 0.115 / 0.136 s |
+| Bellek en çok / thermal | 157 MB / nominal |
+| Kulaklık (İsmail) | Bütün meal'ler duyuldu; kesilme, atlama, bozulma yok |
+
+**Sonuç:** Kilitli ekranda dinleme ve kulaklıktan meal çalma kesintisiz sürüyor; kaynak kullanımı kilit açık koşuyla aynı. App kilit durumunu log'a yazmıyor; kilit İsmail'in gözlemine dayanıyor.
+
+Ham veri: `data/derived/m6/lock/` (`live.jsonl`, `metrics.jsonl`).
