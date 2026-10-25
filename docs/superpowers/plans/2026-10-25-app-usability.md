@@ -50,7 +50,7 @@ scripts/draw_icon.swift  1024×1024 icon variants
 
 **Produces:** `public let suraNames: [String]` (114, index = sura − 1); `public func mealTitle(sura: Int, first: Int, last: Int) -> String`.
 
-- [ ] Write tests:
+- [x] Write tests:
 
 ```swift
 final class SuraNamesTests: XCTestCase {
@@ -70,7 +70,7 @@ final class SuraNamesTests: XCTestCase {
 }
 ```
 
-- [ ] `swift test --filter SuraNamesTests` → fails (no symbols). Implement with the 114 names extracted from the PDF. → passes. Commit `Add Diyanet sura names and meal titles`.
+- [x] `swift test --filter SuraNamesTests` → fails (no symbols). Implement with the 114 names extracted from the PDF. → passes. Commit `Add Diyanet sura names and meal titles`.
 
 ### Task 2: Feed model (TilavetCore, TDD)
 
@@ -83,8 +83,8 @@ public struct Feed: Codable, Equatable, Identifiable, Sendable { public let id: 
 public func feedSummary(_ feed: Feed) -> String   // "Yûsuf → Bakara · 23 meal", "Yûsuf · 5 meal", "Boş"
 ```
 
-- [ ] Tests: JSON round trip with default `JSONEncoder`/`JSONDecoder` equals; summary for empty, one sura, two suras.
-- [ ] Fail → implement → pass. Commit `Add the meal feed model`.
+- [x] Tests: JSON round trip with default `JSONEncoder`/`JSONDecoder` equals; summary for empty, one sura, two suras.
+- [x] Fail → implement → pass. Commit `Add the meal feed model`.
 
 ### Task 3: Sound control and replay (app)
 
@@ -95,7 +95,7 @@ public func feedSummary(_ feed: Feed) -> String   // "Yûsuf → Bakara · 23 me
 - `AudioRoute.observeRemoval(_:)`: `routeChangeNotification` with reason `.oldDeviceUnavailable` → callback on main.
 - `MealOutput`: `play(unit)`, `stop()`, `replayRecent(withinS:)` (last unit if playing or ended < 30 s ago).
 - `Pipeline`: `@Published var soundOn` (init from `headphonesConnected()`); `setSound(_:)` → worker stops or replays recent; `replay(unit)`; `start(threads:durationS:onMeal:)` where `onMeal` receives every started unit on main; `--mute` sets sound off. Worker plays only when sound is on; `Playback` log only for played meals.
-- [ ] Build (`device.py build`); commit `Add one sound control for headphone and speaker`.
+- [x] Build (`device.py build`); commit `Add one sound control for headphone and speaker`.
 
 ### Task 4: Feed store (app)
 
@@ -103,7 +103,7 @@ public func feedSummary(_ feed: Feed) -> String   // "Yûsuf → Bakara · 23 me
 
 - `FeedStore` (`@MainActor ObservableObject`): `active: Feed`, `history: [Feed]` (newest first, excluding active); `append(unit, at:)`, `startNew()`, `delete(feed)`. Files `Documents/feeds/<epoch>.json` (atomic), pointer `Documents/feeds/active.txt`.
 - `MealLibrary.shared.unit(sura:first:)` from `Assets.meal`.
-- [ ] Build; commit with Task 5.
+- [x] Build; commit with Task 5.
 
 ### Task 5: Screens (app)
 
@@ -114,21 +114,21 @@ public func feedSummary(_ feed: Feed) -> String   // "Yûsuf → Bakara · 23 me
 - `HistoryView`: list of `history` (date + `feedSummary`), swipe delete, push read-only `FeedView`.
 - Keep-awake `@AppStorage("keepAwake")` → `isIdleTimerDisabled = keepAwake && running`. Text scale `@AppStorage("textScale")`.
 - Measurement launch args unchanged; `--autostart` does not pass the feed.
-- [ ] Build, install; commit `Add the meal feed, history and controls`.
+- [x] Build, install; commit `Add the meal feed, history and controls`.
 
 ### Task 6: Lock screen
 
 **Files:** Create `NowPlaying.swift`; wire in `ContentView`.
 
 - `MPNowPlayingInfoCenter`: title = `mealTitle`, artist "Tilavet Meal"; `MPRemoteCommandCenter` play → start, pause → stop, toggle.
-- [ ] Build; commit `Show the current meal on the lock screen`.
+- [x] Build; commit `Show the current meal on the lock screen`.
 
 ### Task 7: App icon
 
 **Files:** Create `scripts/draw_icon.swift`, `ios/TilavetApp/Assets.xcassets/AppIcon.appiconset/{Contents.json, icon.png}`; modify `project.yml`.
 
 - Open book + rising sound waves, dark green background, cream/gold strokes; three variants to `~/Desktop/Tilavet Simge Taslakları/`; the first goes into the app; İsmail can swap.
-- [ ] Build, install; commit `Add the app icon`.
+- [x] Build, install; commit `Add the app icon`.
 
 ### Task 8: Device check
 
