@@ -80,6 +80,27 @@ Toplam = meal + model 18 MB + framework 25 MB + metin ~2 MB; test için olan par
 
 Not: Yelda setinin 398 MB'ının büyük kısmı ses değil; `say` her dosyanın başına 32 KB dolgu koyuyor. Aynı kodek `afconvert` ile 287 MB.
 
+## Sonradan: motor kuralı değişti (25 Eki, saha denemesi)
+
+Bu rapordaki cihaz ölçümleri (loopback, kilitli ekran) eski kuralla yapıldı.
+
+**Sorun (İsmail, saha):** Asr Sûresi'nin 1. âyetinin meali gelmiyordu. Acquire yalnız eşleşmenin bittiği âyeti onaylıyordu. 103:1 tek kelime ("والعصر"); pasaj ancak 103:3 başlarken bulunuyor ve 103:1-2'nin meali hiç çalmıyordu. Kısa âyetle başlayan her pasaj aynı kaybı yaşıyordu.
+
+**Kural (`75a100e`, Swift `3bd0260`):** Acquire, eşleşmedeki en çok 2 önceki âyeti de onaylar; koşul: âyetin en az bir kelimesi eşleşmede olmalı ve âyet tahminen ≤ 7 s önce bitmiş olmalı (yaş: âyetin son eşleşen kelimesinden sonraki kelime sayısı × 12 s / penceredeki kelime sayısı). Meal'ler kuyrukta sırayla çalar (İsmail onayı).
+
+| Set (tiny) | Yanlış eski / yeni | Recall eski / yeni |
+|---|---|---|
+| M3 test clean / noisy / hard | 0 / 0 | 96.3 / 95.7 / 94.5 → 96.3 / 95.7 / 95.1 |
+| M4 kör clean / noisy / hard | 0 / 0 | 95.1 / 95.1 / 93.1 → 95.4 / 95.8 / 94.1 |
+| M5 kör (blind2) clean / noisy / hard | 0 / 0 | 96.2 / 95.8 / 95.5 → 97.6 / 97.6 / 96.5 |
+
+Birim sonundan gecikme p90 değişmedi ya da iyileşti (ör. blind2 clean −3.3 → −2.8 s).
+
+- Koşulsuz ilk sürüm kör setlerde 2 yanlış meal üretti: atlanan bir âyeti (74:5) ve 10 s'den eski bir âyeti (79:33) onayladı. İki koşul bunları kapattı; ikisi de test olarak duruyor.
+- **Kör setler artık açık:** kural onlara bakılarak daraltıldı. Tarafsız doğrulama İsmail'in saha denemesi (Kevser, Asr, Nasr, İhlâs: sorun yok).
+
+**Hurûf-ı mukattaa (harfle başlayan sureler):** 31 sure × 5 okuyucu (Husary, Alafasy, Sudeys, Minşavi murattal, Rifai), besmele + 1-4. âyetler, canlı pencerelerle tiny. İlk âyetin meali eski kuralla 45/155, yeni kuralla 58/155; yanlış 0; 1-4. âyet recall 363 → 396/510. Tanıma sorun değil ("الم", "طه", "طسم" doğru yazılıyor). Kaçanlar neredeyse hep yalnız harflerden oluşan âyetler: meali de harf adları ("Elif, Lam, Mim."). "الم" altı surenin açılışı ve "ألم" ile aynı; sure ancak sonraki âyetlerle belli oluyor, o an harfler > 7 s geride. Ayrı kural önerilmez: kazanç harf adları, bedeli yanlış meal riski. Anlamlı devamı olan açılışlar (50:1, 68:1) bulunuyor; 12:1 beşin ikisinde kaçtı.
+
 ## Taşıma stratejisi
 
 **Öneri: Platform başına yerel yeniden yazım + golden vector'ler; paylaşılan çekirdek yok.**

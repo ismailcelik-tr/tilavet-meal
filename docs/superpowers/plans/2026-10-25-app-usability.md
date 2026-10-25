@@ -132,4 +132,4 @@ public func feedSummary(_ feed: Feed) -> String   // "Yûsuf → Bakara · 23 me
 
 ### Task 8: Device check
 
-- [ ] Install over Wi-Fi; check feed, persistence, history, sound table, keep-awake, text size, lock screen, icon (Claude: logs and files; İsmail: by hand). Report results; İsmail decides final button placement.
+- [x] Install over Wi-Fi; check feed, persistence, history, sound table, keep-awake, text size, lock screen, icon (Claude: logs and files; İsmail: by hand). Report results; İsmail decides final button placement.
