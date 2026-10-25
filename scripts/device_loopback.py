@@ -26,7 +26,6 @@ from tilavet.live.devices import default_output, play
 ROOT = Path(__file__).resolve().parents[1]
 STREAMS = ROOT / "data" / "derived" / "streams"
 OUT = ROOT / "data" / "derived" / "m6"
-REPORT = ROOT / "reports" / "m6-device.md"
 STREAM_IDS = ("abdulbaset-mujawwad-1", "abdulbaset-mujawwad-4", "hani-rifai-3", "hani-rifai-4", "minshawi-0",
               "minshawi-1", "sudais-0", "sudais-4")
 LEAD_S = 10.0
