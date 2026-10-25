@@ -34,6 +34,10 @@ struct ContentView: View {
                 await runParity()
                 return
             }
+            if LaunchArgs.has("--tts-sample") {
+                await runTts()
+                return
+            }
             if LaunchArgs.has("--autostart") {
                 start()
             }
@@ -57,6 +61,16 @@ struct ContentView: View {
         do {
             try await Task.detached { try Parity.run(threads: threads) }.value
             parityStatus = "ASR karşılaştırması bitti"
+        } catch {
+            parityStatus = "Hata: \(error)"
+        }
+    }
+
+    private func runTts() async {
+        parityStatus = "TTS örnekleri yazılıyor"
+        do {
+            try await TtsSample.run()
+            parityStatus = "TTS örnekleri bitti"
         } catch {
             parityStatus = "Hata: \(error)"
         }
