@@ -23,8 +23,8 @@ uv run --group onnx python -c "
 from huggingface_hub import hf_hub_download
 for f in ('model.int8.onnx', 'tokens.txt', 'spelling.json'):
     print(hf_hub_download('Abdou/quran-asr-tiny', f))
-" | while read -r path; do cp "$path" "$APP/Data/"; done
+" | while read -r path; do cp -f "$path" "$APP/Data/"; done
 
-cp data/raw/quran-simple-clean.txt data/raw/tr.diyanet.txt data/derived/meal-durations-tr.diyanet-yelda.csv "$APP/Data/"
-rsync -a --delete --exclude '*.part.m4a' data/derived/meals/tr.diyanet-yelda/ "$APP/Data/meals/"
+cp data/raw/quran-simple-clean.txt data/raw/tr.diyanet.txt data/derived/meal-durations-tr.diyanet-eren.csv "$APP/Data/"
+rsync -a --delete --exclude '*.part.m4a' data/derived/meals/tr.diyanet-eren/ "$APP/Data/meals/"
 echo "resources: $(du -sh "$APP/Data" | cut -f1)"
