@@ -134,3 +134,4 @@ Birim sonundan gecikme p90 değişmedi ya da iyileşti (ör. blind2 clean −3.3
 - **Paket:** Yapıldı (Piper Eren, HE-AAC 16 kbps). Parity klipleri yayın paketine geçerken çıkarılacak.
 - **U7, lisans:** Diyanet meal metni ve Piper Eren sesinin (`99eren99`) app içinde dağıtılması. Ürüne geçmeden önce çözülmeli; paket kararını etkileyebilir.
 - **M7 (Klasik Arapça)** planda ayrı bir scope kararı; kapalı derlem varsayımını bozuyor. Ürün yolu seçilirse ertelenebilir.
+  - **Karar (26 Eki, İsmail):** M7 bu app'e katılmayacak. Hadis, hutbe ve dua değerlendirildi; açık makine çevirisi "doğrulanmış meal" vaadini bozar.
